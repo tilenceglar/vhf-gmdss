@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Priprava na izpit VHF GMDSS v Sloveniji: gradivo, simulator VHF DSC postaje, testni izpiti in kartice za ustni del.">
+<meta name="theme-color" content="#0a131c">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<title>VHF GMDSS trener</title>
+<style>
+:root{--bg:#0d1823;--panel:#14232f;--panel2:#1a2e3e;--line:#24394c;--ink:#e9eff5;--muted:#9bb0c2;--accent:#4aa8ff;--ok:#3fcf8e;--bad:#ff6b6b;--warn:#ffc857;--lcd:#b8cf8a;--lcd2:#a9c27a;--lcdink:#1d2810}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+button{font:inherit;cursor:pointer}
+header{position:sticky;top:0;z-index:20;background:#0a131c;border-bottom:1px solid var(--line)}
+.hwrap{max-width:760px;margin:0 auto;padding:10px 12px 0}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.brand h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.2px}
+.brand a{font-size:13px;color:var(--accent);text-decoration:none;white-space:nowrap}
+nav{display:flex}
+nav button{flex:1;background:none;border:0;color:var(--muted);padding:9px 2px;font-weight:650;border-bottom:3px solid transparent}
+nav button.on{color:var(--ink);border-color:var(--accent)}
+main{max-width:760px;margin:0 auto;padding:12px 12px 40px}
+.view{display:none}.view.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.muted{color:var(--muted)}.small{font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,.btn{background:var(--panel2);color:var(--ink);border:1px solid #2f4a62;border-radius:9px;padding:9px 12px;font:inherit}
+select{flex:1;min-width:0}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#06121d;font-weight:700}
+.btn.ghost{background:none}
+.seg{display:flex;border:1px solid #2f4a62;border-radius:9px;overflow:hidden}
+.seg button{background:none;border:0;color:var(--muted);padding:8px 12px;font-weight:600}
+.seg button.on{background:#25425b;color:var(--ink)}
+.task h3{margin:0 0 6px;font-size:15px}
+.hint{background:#16324a;border-left:3px solid var(--accent);padding:8px 10px;border-radius:6px;margin-top:8px;font-size:14px}
+.errs{margin:8px 0 0;padding-left:18px;font-size:13px}
+.errs li{color:var(--bad)}.errs li.minor{color:var(--warn)}
+.steps{display:flex;gap:4px;margin-top:8px}
+.steps span{flex:1;height:5px;border-radius:3px;background:#2a4256}
+.steps span.done{background:var(--ok)}.steps span.cur{background:var(--accent)}
+.result{padding:10px;border-radius:8px;margin-top:8px;font-weight:650}
+.result.pass{background:#123a2b;color:var(--ok)}.result.fail{background:#3a1717;color:var(--bad)}
+
+/* radio */
+.radio{background:linear-gradient(180deg,#2c323a,#1a1e23);border:1px solid #3d454f;border-radius:20px;padding:12px 12px 14px;box-shadow:0 10px 24px #0008, inset 0 1px 0 #ffffff14;position:relative;max-width:420px;margin:0 auto 12px}
+.rhead{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#aab4bf;letter-spacing:1.5px;margin:0 4px 8px;font-weight:700}
+.rhead .led{width:8px;height:8px;border-radius:50%;background:#3fcf8e;box-shadow:0 0 6px #3fcf8e;display:inline-block;margin-right:6px}
+.rhead .led.tx{background:#ff5050;box-shadow:0 0 8px #ff5050}
+.rhead .led.off{background:#444;box-shadow:none}
+.rtop{display:flex;gap:10px}
+.lcd{flex:1;background:linear-gradient(180deg,var(--lcd),var(--lcd2));color:var(--lcdink);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;border-radius:8px;padding:7px 9px;height:188px;position:relative;box-shadow:inset 0 2px 7px #0006;overflow:hidden;font-size:12.5px}
+.lcd.off{background:#2f3a2a;color:transparent}
+.lcd .bar{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700}
+.lcd .chbig{font-size:52px;font-weight:800;line-height:1;margin-top:6px;letter-spacing:-1px}
+.lcd .chlbl{font-size:11.5px;font-weight:700;margin-top:2px}
+.lcd .pos{position:absolute;left:9px;right:9px;bottom:22px;font-size:11.5px}
+.lcd .stat{position:absolute;left:0;right:0;bottom:0;padding:3px 9px;font-size:11.5px;font-weight:800;background:#1d281022}
+.lcd .stat.blink{animation:bl 1s steps(2) infinite;background:var(--lcdink);color:var(--lcd)}
+@keyframes bl{50%{background:transparent;color:var(--lcdink)}}
+.lcd .ttl{font-weight:800;border-bottom:1.5px solid var(--lcdink);padding-bottom:2px;margin-bottom:3px;display:flex;justify-content:space-between}
+.lcd .li{padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.lcd .li.sel{background:var(--lcdink);color:var(--lcd)}
+.lcd .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lcd .soft{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:2px 9px;font-size:11px;font-weight:800;border-top:1px solid #1d281055}
+.lcd .hold{position:absolute;inset:0;z-index:3;background:var(--lcdink);color:var(--lcd);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.lcd .hold b{font-size:46px}
+.dbox{width:78px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.dlbl{font-size:10px;color:#ff9b9b;font-weight:800;letter-spacing:1px;text-align:center}
+.dwell{position:relative;width:74px;height:74px;border-radius:12px;background:#111;border:2px solid #555;display:flex;align-items:center;justify-content:center}
+.dbtn{width:54px;height:54px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#ff7a7a,#c41616 60%,#7a0b0b);color:#fff;font-weight:900;font-size:9.5px;box-shadow:0 3px 0 #500;touch-action:none;user-select:none;-webkit-user-select:none}
+.dbtn:active{transform:translateY(2px)}
+.cover{position:absolute;inset:-2px;border-radius:12px;background:repeating-linear-gradient(135deg,#7a5420 0 6px,#5e3f14 6px 12px);border:2px solid #ffae42;color:#ffd79a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;text-align:center;transition:transform .2s;transform-origin:top;backdrop-filter:blur(1px)}
+.dwell.open .cover{transform:rotateX(80deg) translateY(-40px);opacity:.25;pointer-events:none}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.key{background:linear-gradient(#4a525d,#3a414b);color:#eef3f8;border:0;border-radius:10px;padding:12px 0;font-weight:800;font-size:13px;box-shadow:0 3px 0 #0009;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.key:active{transform:translateY(2px);box-shadow:0 1px 0 #0009}
+.key.sm{font-size:11.5px}
+.key.ptt{grid-column:span 2;background:linear-gradient(#2f7d5b,#235f45)}
+.key.pwr{background:linear-gradient(#5a4040,#463232)}
+.key.menu{background:linear-gradient(#35648f,#2a4f72)}
+.kpad{position:absolute;left:10px;right:10px;bottom:10px;background:#0f141aee;border:1px solid #445;border-radius:14px;padding:10px;display:none;z-index:4}
+.kpad.on{display:block}
+.kpad .dir{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.kpad .dir button{background:#25425b;color:var(--ink);border:0;border-radius:7px;padding:6px 8px;font-size:12px}
+.kpad .g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.kpad .g button{background:#3a414b;color:#fff;border:0;border-radius:8px;padding:11px 0;font-weight:800}
+.kpad .g button.ok{background:var(--accent);color:#06121d}
+.spk{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;max-height:220px;overflow:auto;background:#0a1219;border:1px solid var(--line);border-radius:10px;padding:8px}
+.spk div{padding:3px 0;border-bottom:1px dashed #1f3142}
+.spk .tx{color:#8fd3ff}.spk .rx{color:#e9eff5}.spk .dsc{color:#ffd27a}.spk .sys{color:#8aa0b4;font-style:italic}
+.wait{margin-top:8px}
+
+/* composer */
+.sheet{position:fixed;inset:0;background:#000a;z-index:50;display:none;align-items:flex-end;justify-content:center}
+.sheet.on{display:flex}
+.sheet-in{background:var(--panel);width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:14px;border-top:1px solid var(--line)}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sheet-h .x{background:none;border:0;color:var(--muted);font-size:20px}
+.onair{display:inline-block;background:#c41616;color:#fff;border-radius:5px;padding:1px 7px;font-size:12px;font-weight:800;margin-right:6px}
+.built{min-height:60px;background:#0a1219;border:1px dashed #36536c;border-radius:10px;padding:6px;margin:8px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+.built div{padding:6px 8px;margin:3px 0;background:#173048;border-radius:7px;cursor:pointer}
+.built div.wrong{background:#4a1c1c;outline:1px solid var(--bad)}
+.built div.right{background:#163d2c}
+.tiles{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.tiles button{text-align:left;background:var(--panel2);color:var(--ink);border:1px solid #2f4a62;border-radius:8px;padding:9px 10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+.cmsg{font-size:14px;margin:6px 0;min-height:20px}
+
+/* quiz */
+.qhead{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+.qtxt{font-size:16px;font-weight:600;margin:4px 0 10px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;background:var(--panel2);color:var(--ink);border:1px solid #2f4a62;border-radius:10px;padding:11px 12px}
+.opts button.ok{background:#143a2a;border-color:var(--ok)}
+.opts button.no{background:#3d1a1a;border-color:var(--bad)}
+.expl{margin-top:10px;font-size:14px;background:#16324a;border-radius:8px;padding:8px 10px}
+.pbar{height:6px;background:#22384c;border-radius:3px;overflow:hidden;margin-bottom:10px}
+.pbar i{display:block;height:100%;background:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.big{font-size:34px;font-weight:800}
+.sub{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line);font-size:14px}
+.miss{font-size:13px;margin-top:8px}
+.miss li{margin-bottom:6px}
+.flash{min-height:180px;display:flex;flex-direction:column;justify-content:center}
+.flash .ans{margin-top:12px;background:#16324a;border-radius:8px;padding:10px;font-size:14.5px;white-space:pre-line}
+h2{font-size:15px;margin:0 0 8px}
+.linkbtn{background:none;border:0;color:var(--accent);font-size:13px;padding:0}
+.toc{display:flex;flex-wrap:wrap;gap:6px}
+.toc a{background:var(--panel2);border:1px solid #2f4a62;border-radius:999px;padding:5px 10px;color:var(--ink);text-decoration:none;font-size:13px}
+.gradivo{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 16px 18px;line-height:1.55}
+.gradivo h1{font-size:21px;margin:14px 0 6px}
+.gradivo h2{font-size:18px;margin:26px 0 8px;padding-top:12px;border-top:1px solid var(--line);color:#fff}
+.gradivo h3{font-size:15.5px;margin:18px 0 6px;color:#cfe6ff}
+.gradivo h1,.gradivo h2,.gradivo h3{scroll-margin-top:110px}
+.gradivo a{color:var(--accent)}
+.gradivo p,.gradivo li{font-size:15px}
+.gradivo ul,.gradivo ol{padding-left:22px}
+.gradivo .tw{overflow-x:auto;margin:10px 0;-webkit-overflow-scrolling:touch}
+.gradivo table{border-collapse:collapse;font-size:13.5px;min-width:100%}
+.gradivo th,.gradivo td{border:1px solid #2a4357;padding:6px 8px;text-align:left;vertical-align:top}
+.gradivo th{background:#1b3247}
+.gradivo tr:nth-child(even) td{background:#17293a}
+.gradivo pre{background:#0a1219;border:1px solid var(--line);border-radius:8px;padding:10px;overflow-x:auto;font-size:12.5px;line-height:1.5}
+.gradivo code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.gradivo .formula{text-align:center;font-size:17px;background:#16324a;border-radius:8px;padding:10px;font-family:Georgia,serif}
+.gradivo hr{border:0;border-top:1px solid var(--line);margin:22px 0 10px}
+.gradivo em{color:var(--muted)}
+@media print{
+  header,.toc,#v-sim,#v-test,#v-oral{display:none!important}
+  html,body{background:#fff;color:#000}
+  main{padding:0;max-width:none}
+  #v-gradivo{display:block!important}
+  .gradivo{background:#fff;border:0;padding:0;color:#000}
+  .gradivo h2{color:#000;border-color:#999;break-after:avoid}
+  .gradivo h3{color:#000;break-after:avoid}
+  .gradivo a{color:#000;text-decoration:none}
+  .gradivo th{background:#eee}
+  .gradivo tr:nth-child(even) td{background:#fff}
+  .gradivo th,.gradivo td{border-color:#999}
+  .gradivo pre{background:#f4f4f4;border-color:#ccc;color:#000;white-space:pre-wrap;break-inside:avoid}
+  .gradivo .formula{background:#f4f4f4}
+  .gradivo table{break-inside:auto}.gradivo tr{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <div class="brand"><h1>VHF GMDSS trener</h1><button class="linkbtn" id="printBtn">Natisni gradivo</button></div>
+  <nav>
+    <button data-v="gradivo" class="on">Gradivo</button>
+    <button data-v="sim">Simulator</button>
+    <button data-v="test">Testi</button>
+    <button data-v="oral">Ustni del</button>
+  </nav>
+</div></header>
+
+<main>
+<!-- GRADIVO -->
+<section id="v-gradivo" class="view on">
+  <div class="card toc" id="toc"><a href="#kako-poteka-izpit">Kako poteka izpit</a><a href="#ucni-nacrt">Učni načrt</a><a href="#predmet-1-pravila-o-radijski-sluzbi">Predmet 1: Pravila o radijski službi</a><a href="#predmet-2-osnove-radiotelefonije">Predmet 2: Osnove radiotelefonije</a><a href="#predmet-3-delo-na-postaji-vhf-dsc">Predmet 3: Delo na postaji VHF DSC</a><a href="#predloge-glasovnih-sporocil">Predloge glasovnih sporočil</a><a href="#kartica-za-zadnji-dan">Kartica za zadnji dan</a></div>
+  <article class="gradivo" id="gradivo"><h1 id="vhf-gmdss-izpit-ucni-nacrt-in-gradivo">VHF GMDSS izpit — učni načrt in gradivo</h1>
+<h2 id="kako-poteka-izpit">Kako poteka izpit</h2>
+<p>Izpit opravljaš na Upravi RS za pomorstvo (URSP) v Kopru; traja največ 30 minut, teorija je ustna, praktični del pa na postaji VHF GMDSS ali simulatorju (<a href="https://spot.gov.si/sl/dejavnosti-in-poklici/poklici-in-strokovni-kadri/voditelj-in-upravljavec-colna" target="_blank" rel="noopener">SPOT</a>).</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Predmet (iz zapisnika izpita)</th>
+<th>Kako se preverja</th>
+<th>Kaj morajo slišati od tebe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Pravila o radijski službi</td>
+<td>ustno</td>
+<td>GMDSS, morska področja, MMSI, dovoljenja, tajnost, prioritete, straža</td>
+</tr>
+<tr>
+<td>2. Osnove radiotelefonije</td>
+<td>ustno</td>
+<td>kanali, doseg VHF, črkovalna abeceda, proceduralne besede</td>
+</tr>
+<tr>
+<td>3. Delo na VHF GMDSS postaji ali simulatorju</td>
+<td>praktično</td>
+<td>DSC alarm, MAYDAY na glas, preklic lažnega alarma, PAN PAN, SECURITE, rutinski DSC klic</td>
+</tr>
+</tbody>
+</table></div>
+<p>Predmeti so povzeti po uradnem obrazcu zapisnika (<a href="https://www.uradni-list.si/files/RS_-2005-042-01649-OB~P008-0000.PDF" target="_blank" rel="noopener">Uradni list</a>); če padeš en predmet, obstaja popravni izpit iz tega predmeta. Stroški: upravna taksa 18,14 € + pristojbina 22,00 €, s seboj osebni dokument in fotografija 3,5 × 4,5 cm (<a href="https://spot.gov.si/sl/dejavnosti-in-poklici/dovoljenja/potrdilo-o-usposobljenosti-za-upravljanje-s-postajo-vhf-gmdss" target="_blank" rel="noopener">SPOT</a>).</p>
+<p>Praktični del je jedro: komisija ti da scenarij (npr. požar na čolnu) in pričakuje pravilen vrstni red tipk na DSC postaji ter glasovno sporočilo v angleščini. Dodaten brezplačen spletni tečaj s simulatorjem (tudi v slovenščini) je <a href="https://www.egmdss.com/gmdss-courses" target="_blank" rel="noopener">eGMDSS</a> — v njem kot obalna postaja nastopa MRCC Koper (MMSI 002780200).</p>
+<h2 id="ucni-nacrt">Učni načrt</h2>
+<p>Pet dni po približno 60–90 minut zadostuje; šesti dan je samo ponavljanje in testni izpit. Če imaš manj časa, združi dneva 1+2 in 3+4.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Dan</th>
+<th>Tema</th>
+<th>Kaj narediš</th>
+<th>Mejnik (preden greš naprej)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Pravila o radijski službi</td>
+<td>Preberi predmet 1; nariši si morska področja A1–A4</td>
+<td>Znaš razložiti GMDSS, A1 in sestavo MMSI za ladjo, skupino in obalno postajo</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Osnove radiotelefonije</td>
+<td>Preberi predmet 2; črkovalno abecedo na glas črkuj svoje ime in ime čolna</td>
+<td>Na pamet: kanali 16, 70, 6, 13, 12; doseg; 10 proceduralnih besed</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Postopki v sili</td>
+<td>Preberi predmet 3 (DSC + MAYDAY); simulator: način Učenje, scenarija MAYDAY in lažni alarm</td>
+<td>MAYDAY sporočilo veš na glas brez lista</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Nujnost, varnost, rutina</td>
+<td>PAN PAN, SECURITE, rutinski DSC klic; simulator: ostali scenariji</td>
+<td>Vsi scenariji v simulatorju brez napak</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Prejem alarma, EPIRB, SART, NAVTEX</td>
+<td>Prejem tujega DSC alarma, MAYDAY RELAY, EPIRB, SART in NAVTEX; testni izpit 1 in 2</td>
+<td>≥ 85 % na testnem izpitu</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Ponovitev</td>
+<td>Kartica številk; simulator v načinu Izpit (brez namigov); testni izpit 3</td>
+<td>2× zapored scenarij brez napake in test ≥ 90 %</td>
+</tr>
+</tbody>
+</table></div>
+<p>Največ točk se izgubi pri vrstnem redu v MAYDAY sporočilu in pri tem, kaj narediti, ko sam prejmeš DSC alarm. Ta dva dela vadi na glas, ne samo v glavi.</p>
+<p>Simulator postaje, testni izpiti in kartice za ustni del so v zavihkih <a href="#simulator">Simulator</a>, <a href="#test">Testni izpit</a> in <a href="#ustni">Ustni del</a>.</p>
+<h2 id="predmet-1-pravila-o-radijski-sluzbi">Predmet 1: Pravila o radijski službi</h2>
+<h3 id="gmdss">GMDSS</h3>
+<p>GMDSS (Global Maritime Distress and Safety System) je svetovni sistem za alarmiranje in reševanje na morju, določen v SOLAS, poglavje IV, v celoti uveden 1. 2. 1999. Cilj: ob nesreči takoj alarmirati obalni reševalni center (RCC) in ladje v bližini, ne glede na to, kje si.</p>
+<p>Devet funkcij GMDSS (pogosto vprašanje):</p>
+<ol>
+<li>Alarmiranje ladja → obala</li>
+<li>Alarmiranje obala → ladja</li>
+<li>Alarmiranje ladja → ladja</li>
+<li>Komunikacije za koordinacijo iskanja in reševanja (SAR)</li>
+<li>Komunikacije na kraju nesreče (on-scene)</li>
+<li>Signali za določanje položaja (SART, AIS-SART)</li>
+<li>Pomorske varnostne informacije (MSI: navigacijska in vremenska opozorila)</li>
+<li>Splošne radijske komunikacije</li>
+<li>Komunikacije most–most (bridge-to-bridge)</li>
+</ol>
+<h3 id="morska-podrocja">Morska področja</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Področje</th>
+<th>Pokritost</th>
+<th>Doseg (približno)</th>
+<th>Oprema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1</td>
+<td>vsaj ena obalna postaja VHF DSC s stalno stražo na kanalu 70</td>
+<td>20–30 NM</td>
+<td>VHF DSC</td>
+</tr>
+<tr>
+<td>A2</td>
+<td>obalna postaja MF DSC (2187,5 kHz)</td>
+<td>100–150 NM</td>
+<td>+ MF DSC</td>
+</tr>
+<tr>
+<td>A3</td>
+<td>satelitsko pokritje Inmarsat</td>
+<td>med 70° S in 70° J</td>
+<td>+ satelitska postaja ali HF</td>
+</tr>
+<tr>
+<td>A4</td>
+<td>vse ostalo (polarna območja)</td>
+<td>—</td>
+<td>+ HF DSC</td>
+</tr>
+</tbody>
+</table></div>
+<p>Slovensko morje in ves vzhodni Jadran sta v področju <strong>A1</strong>. Zato zadostuje VHF DSC postaja in izpit VHF GMDSS (ekvivalent SRC – Short Range Certificate).</p>
+<h3 id="kdo-je-kdo-v-sloveniji">Kdo je kdo v Sloveniji</h3>
+<ul>
+<li><strong>URSP</strong> (Uprava RS za pomorstvo, Koper) — izpit in potrdilo o usposobljenosti operaterja.</li>
+<li><strong>AKOS</strong> — dovoljenje za radijsko postajo na plovilu; s tem dobiš klicni znak (predpona S5) in MMSI (<a href="https://arhiv.akos-rs.si/radios-on-vessels-and-aircrafts" target="_blank" rel="noopener">AKOS</a>).</li>
+<li><strong>MRCC Koper</strong> — center za iskanje in reševanje; VHF kanala 16 in 12, DSC kanal 70, MMSI 002780200 (<a href="https://www.luka-kp.si/wp-content/uploads/2024/02/PORT-info-BOOK-2024.pdf" target="_blank" rel="noopener">Luka Koper, Port Info Book</a>).</li>
+<li>Mednarodno: <strong>ITU</strong> (Radijski pravilnik – Radio Regulations) in <strong>IMO</strong> (SOLAS, SMCP).</li>
+</ul>
+<h3 id="identifikacija-mmsi">Identifikacija: MMSI</h3>
+<p>MMSI (Maritime Mobile Service Identity) je 9-mestna številka, vpisana v DSC postajo in poslana samodejno ob vsakem DSC klicu. Prve tri števke so MID (Maritime Identification Digits) = koda države: <strong>Slovenija 278</strong>, Hrvaška 238, Italija 247.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Vrsta postaje</th>
+<th>Oblika</th>
+<th>Primer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ladijska postaja</td>
+<td>MID + 6 števk</td>
+<td>278123456</td>
+</tr>
+<tr>
+<td>Skupina ladij</td>
+<td>0 + MID + 5 števk</td>
+<td>027812345</td>
+</tr>
+<tr>
+<td>Obalna postaja</td>
+<td>00 + MID + 4 števke</td>
+<td>002780200 (MRCC Koper)</td>
+</tr>
+<tr>
+<td>SAR letalo</td>
+<td>111 + MID + 3 števke</td>
+<td>111278123</td>
+</tr>
+<tr>
+<td>AIS-SART</td>
+<td>970 + 6 števk</td>
+<td>970123456</td>
+</tr>
+<tr>
+<td>MOB naprava (AIS/DSC)</td>
+<td>972 + 6 števk</td>
+<td>972123456</td>
+</tr>
+<tr>
+<td>EPIRB z AIS</td>
+<td>974 + 6 števk</td>
+<td>974123456</td>
+</tr>
+</tbody>
+</table></div>
+<p>MMSI vneseš v postajo enkrat; večina naprav ga po vnosu zaklene. Brez MMSI tipka DISTRESS ne pošlje alarma.</p>
+<h3 id="prioritete-sporocil">Prioritete sporočil</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Prioriteta</th>
+<th>Klic</th>
+<th>Kdaj</th>
+<th>DSC kategorija</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Stiska</td>
+<td>MAYDAY</td>
+<td>resna in neposredna nevarnost za plovilo ali osebo, potrebna takojšnja pomoč</td>
+<td>Distress</td>
+</tr>
+<tr>
+<td>2. Nujnost</td>
+<td>PAN PAN</td>
+<td>nujno sporočilo o varnosti plovila ali osebe, brez neposredne nevarnosti (okvara motorja brez neposredne nevarnosti, medicinski nasvet ali prevoz poškodovanca)</td>
+<td>Urgency</td>
+</tr>
+<tr>
+<td>3. Varnost</td>
+<td>SECURITE</td>
+<td>pomembno navigacijsko ali vremensko opozorilo (plavajoč zabojnik, ugasnjen svetilnik, nevihta)</td>
+<td>Safety</td>
+</tr>
+<tr>
+<td>4. Rutina</td>
+<td>—</td>
+<td>vse ostalo</td>
+<td>Routine</td>
+</tr>
+</tbody>
+</table></div>
+<p>Sporočilo višje prioritete ima vedno prednost: ko slišiš MAYDAY, prekineš vse ostalo.</p>
+<h3 id="pravila-obratovanja">Pravila obratovanja</h3>
+<ul>
+<li><strong>Tajnost zvez</strong>: vsebine zvez, ki niso namenjene tebi, ne smeš razkrivati, zapisovati za druge ali izkoriščati.</li>
+<li><strong>Prepovedano</strong>: nepotrebne ali lažne oddaje, oddaje brez identifikacije, nespodobno izražanje, motenje drugih postaj, klepet na kanalu 16, preverjanje postaje (radio check) na kanalih 16 ali 70.</li>
+<li><strong>Avtoriteta</strong>: radijska postaja je pod nadzorom poveljnika oz. voditelja čolna; alarm v stiski se pošlje le po njegovem ukazu.</li>
+<li><strong>Čas</strong>: v zvezah v sili se uporablja UTC (Slovenija = UTC+1 pozimi, UTC+2 poleti).</li>
+<li><strong>Straža</strong>: med plovbo mora biti VHF DSC postaja vklopljena in mora neprekinjeno poslušati DSC kanal 70 (to dela samodejno), in kolikor je mogoče, kanal 16.</li>
+<li><strong>Dovoljenje</strong> za postajo in <strong>potrdilo</strong> operaterja morata biti na plovilu.</li>
+</ul>
+<h2 id="predmet-2-osnove-radiotelefonije">Predmet 2: Osnove radiotelefonije</h2>
+<h3 id="lastnosti-vhf">Lastnosti VHF</h3>
+<p>Pomorski VHF deluje v pasu 156–174 MHz in se širi <strong>premočrtno</strong> (kot svetloba), zato je doseg odvisen predvsem od višine anten, ne od moči.</p>
+<p class="formula">d [NM] ≈ 2,5 × ( √h<sub>1</sub> [m] + √h<sub>2</sub> [m] )</p>
+
+<p>Primer: čoln z anteno na 4 m in obalna postaja na 100 m → 2,5 × (2 + 10) = 30 NM. Dva čolna s 4 m antenama → približno 10 NM. Ročna postaja v roki (~1,5 m) doseže drug čoln le nekaj milj.</p>
+<ul>
+<li><strong>Moč</strong>: fiksna postaja 25 W (HIGH) ali 1 W (LOW); ročna 5–6 W. V marini in na kratke razdalje uporabljaj LOW. Alarm v stiski gre vedno z 25 W.</li>
+<li><strong>Simpleks</strong>: oddaja in sprejem na isti frekvenci, govori le eden naenkrat (tipka PTT). Vse zveze ladja–ladja.</li>
+<li><strong>Dupleks</strong>: dve frekvenci (oddaja in sprejem ločeno), za javne zveze z obalnimi radijskimi postajami, npr. kanali 24–28.</li>
+<li><strong>Squelch</strong> (SQ) izklopi šum, ko ni signala; nastavi ga ravno toliko, da šum izgine — previsoko pomeni, da ne slišiš šibkih postaj.</li>
+</ul>
+<h3 id="kanali-ki-jih-moras-znati">Kanali, ki jih moraš znati</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Kanal</th>
+<th>Frekvenca</th>
+<th>Namen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>70</td>
+<td>156,525 MHz</td>
+<td><strong>samo DSC</strong> (digitalni klici) — nikoli govor</td>
+</tr>
+<tr>
+<td>16</td>
+<td>156,800 MHz</td>
+<td>stiska, nujnost, varnost in klicanje z govorom</td>
+</tr>
+<tr>
+<td>06</td>
+<td>156,300 MHz</td>
+<td>med ladjami; komunikacija na kraju nesreče (SAR z letali)</td>
+</tr>
+<tr>
+<td>13</td>
+<td>156,650 MHz</td>
+<td>most–most, navigacijska varnost, 1 W</td>
+</tr>
+<tr>
+<td>12</td>
+<td>156,600 MHz</td>
+<td>pristaniške operacije; MRCC Koper</td>
+</tr>
+<tr>
+<td>08, 72, 77</td>
+<td>—</td>
+<td>delovni kanali med ladjami</td>
+</tr>
+<tr>
+<td>15, 17</td>
+<td>—</td>
+<td>komunikacije na krovu, 1 W</td>
+</tr>
+<tr>
+<td>AIS 1 / AIS 2</td>
+<td>161,975 / 162,025 MHz</td>
+<td>samodejni AIS (kanala 87B in 88B)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Kanal 16 je samo za klic in sporočila v sili; po vzpostavljeni zvezi takoj preideš na delovni kanal.</p>
+<h3 id="mednarodna-crkovalna-abeceda">Mednarodna črkovalna abeceda</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>A–I</th>
+<th>J–R</th>
+<th>S–Z</th>
+<th>Številke</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A Alfa</td>
+<td>J Juliett</td>
+<td>S Sierra</td>
+<td>0 Zero</td>
+</tr>
+<tr>
+<td>B Bravo</td>
+<td>K Kilo</td>
+<td>T Tango</td>
+<td>1 One (wun)</td>
+</tr>
+<tr>
+<td>C Charlie</td>
+<td>L Lima</td>
+<td>U Uniform</td>
+<td>2 Two (too)</td>
+</tr>
+<tr>
+<td>D Delta</td>
+<td>M Mike</td>
+<td>V Victor</td>
+<td>3 Three (tree)</td>
+</tr>
+<tr>
+<td>E Echo</td>
+<td>N November</td>
+<td>W Whiskey</td>
+<td>4 Four (fower)</td>
+</tr>
+<tr>
+<td>F Foxtrot</td>
+<td>O Oscar</td>
+<td>X X-ray</td>
+<td>5 Five (fife)</td>
+</tr>
+<tr>
+<td>G Golf</td>
+<td>P Papa</td>
+<td>Y Yankee</td>
+<td>6 Six</td>
+</tr>
+<tr>
+<td>H Hotel</td>
+<td>Q Quebec</td>
+<td>Z Zulu</td>
+<td>7 Seven</td>
+</tr>
+<tr>
+<td>I India</td>
+<td>R Romeo</td>
+<td></td>
+<td>8 Eight (ait), 9 Nine (niner)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Številke izgovarjaš posamično: kanal 72 = “seven two”, 45°32,5' N = “four five degrees three two decimal five minutes north”. Ime čolna črkuješ z “I SPELL”, npr. “SIRENA, I spell: Sierra India Romeo Echo November Alfa”.</p>
+<h3 id="proceduralne-besede">Proceduralne besede</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Beseda</th>
+<th>Pomen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>THIS IS</td>
+<td>sledi ime postaje, ki kliče</td>
+</tr>
+<tr>
+<td>ALL STATIONS</td>
+<td>klic vsem postajam</td>
+</tr>
+<tr>
+<td>OVER</td>
+<td>končal sem, čakam odgovor</td>
+</tr>
+<tr>
+<td>OUT</td>
+<td>zveza je končana, odgovor ni pričakovan (nikoli “over and out”)</td>
+</tr>
+<tr>
+<td>RECEIVED</td>
+<td>sporočilo sprejeto</td>
+</tr>
+<tr>
+<td>SAY AGAIN</td>
+<td>ponovi</td>
+</tr>
+<tr>
+<td>I SAY AGAIN</td>
+<td>ponavljam</td>
+</tr>
+<tr>
+<td>I SPELL</td>
+<td>črkujem</td>
+</tr>
+<tr>
+<td>CORRECTION</td>
+<td>popravek zadnje besede/stavka</td>
+</tr>
+<tr>
+<td>WAIT … MINUTES</td>
+<td>počakaj</td>
+</tr>
+<tr>
+<td>STATION CALLING</td>
+<td>postaja, ki me kliče (ko ne razumeš imena)</td>
+</tr>
+<tr>
+<td>HOW DO YOU READ</td>
+<td>kako me slišiš; odgovor “I read you five” (lestvica 1–5)</td>
+</tr>
+<tr>
+<td>SEELONCE MAYDAY</td>
+<td>tišina — ukaz postaje v stiski ali koordinatorja (RCC)</td>
+</tr>
+<tr>
+<td>SEELONCE DISTRESS</td>
+<td>tišina — ukaz druge postaje blizu nesreče</td>
+</tr>
+<tr>
+<td>PRUDONCE</td>
+<td>omejen promet je spet dovoljen</td>
+</tr>
+<tr>
+<td>SEELONCE FEENEE</td>
+<td>promet v stiski je končan, kanal je prost</td>
+</tr>
+</tbody>
+</table></div>
+<p>IMO SMCP doda še označevalce sporočil (QUESTION, ANSWER, REQUEST, INFORMATION, INSTRUCTION, ADVICE, WARNING, INTENTION); izrečeš jih na začetku stavka, da sogovornik takoj ve, kakšno sporočilo sledi.</p>
+<h3 id="rutinski-glasovni-klic">Rutinski glasovni klic</h3>
+<ol>
+<li>Poslušaj, ali je kanal prost.</li>
+<li>“[ime klicane postaje] ×3, THIS IS [tvoje ime] ×3, [klicni znak], OVER.”</li>
+<li>Ko odgovori: predlagaj delovni kanal (“channel seven two”), preklopi in nadaljuj tam.</li>
+<li>Če ni odgovora: klic največ trikrat v razmaku 2 minut, nato ponoviš šele po vsaj 3 minutah (<a href="https://www.itu.int/rec/R-REC-M.1171/en" target="_blank" rel="noopener">ITU-R M.1171</a>).</li>
+</ol>
+<h2 id="predmet-3-delo-na-postaji-vhf-dsc">Predmet 3: Delo na postaji VHF DSC</h2>
+<h3 id="kontrole-postaje">Kontrole postaje</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Tipka</th>
+<th>Kaj naredi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PWR / VOL</td>
+<td>vklop in glasnost</td>
+</tr>
+<tr>
+<td>SQ</td>
+<td>squelch — odpravi šum</td>
+</tr>
+<tr>
+<td>CH (gumb)</td>
+<td>izbira kanala</td>
+</tr>
+<tr>
+<td>16/9</td>
+<td>takoj na kanal 16</td>
+</tr>
+<tr>
+<td>H/L</td>
+<td>moč 25 W / 1 W</td>
+</tr>
+<tr>
+<td>DW (TW)</td>
+<td>dvojno (trojno) spremljanje: 16 + izbrani kanal</td>
+</tr>
+<tr>
+<td>SCAN</td>
+<td>pregledovanje kanalov</td>
+</tr>
+<tr>
+<td>DISTRESS</td>
+<td>pod rdečim pokrovom; drži 3–5 s = alarm v stiski</td>
+</tr>
+<tr>
+<td>CALL / MENU</td>
+<td>DSC meni: individualni, skupinski, vsem ladjam, test, preklic</td>
+</tr>
+<tr>
+<td>PTT</td>
+<td>tipka na mikrofonu — drži med govorom, spusti za poslušanje</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="kaj-je-dsc">Kaj je DSC</h3>
+<p>DSC (Digital Selective Calling) je kratek digitalni klic na kanalu 70, ki samodejno vsebuje tvoj MMSI. Alarm v stiski vsebuje še položaj in čas (UTC) iz GPS ter naravo stiske. DSC samo <strong>napove</strong> klic; pravo sporočilo vedno sledi z govorom na kanalu, navedenem v klicu.</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>DSC klic</th>
+<th>Komu</th>
+<th>Kategorija</th>
+<th>Govor nato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Distress alert</td>
+<td>vsem (samodejno)</td>
+<td>Distress</td>
+<td>kanal 16</td>
+</tr>
+<tr>
+<td>All ships</td>
+<td>vsem v dosegu</td>
+<td>Urgency ali Safety</td>
+<td>kanal 16 (varnostno sporočilo nato na delovnem kanalu)</td>
+</tr>
+<tr>
+<td>Individual</td>
+<td>eni postaji (MMSI)</td>
+<td>Routine (ali Urgency/Safety)</td>
+<td>predlagani delovni kanal, npr. 72</td>
+</tr>
+<tr>
+<td>Group</td>
+<td>skupini (0 + MID …)</td>
+<td>Routine</td>
+<td>delovni kanal</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>obalni postaji, npr. 002780200</td>
+<td>Safety – Test</td>
+<td>brez govora</td>
+</tr>
+</tbody>
+</table></div>
+<p>Narava stiske, ki jo lahko izbereš: Fire/Explosion, Flooding, Collision, Grounding, Listing/Capsizing, Sinking, Disabled and adrift, Abandoning ship, Piracy/Armed attack, Man overboard, Undesignated (nedoločeno).</p>
+<h3 id="posiljanje-alarma-v-stiski-mayday">Pošiljanje alarma v stiski (MAYDAY)</h3>
+<ol>
+<li>Preveri, da ima postaja položaj (GPS) — če ga nima, ga vneseš ročno.</li>
+<li><strong>Hitra pot (nedoločen alarm)</strong>: dvigni pokrov, drži DISTRESS 3–5 s.</li>
+<li><strong>Če je čas (določen alarm)</strong>: DISTRESS kratko ali MENU → izberi naravo stiske → drži DISTRESS 3–5 s.</li>
+<li>Postaja sama preklopi na kanal 16 in moč 25 W. Počakaj na DSC potrditev (do približno 15 s).</li>
+<li>Oddaj glasovni klic in sporočilo MAYDAY na kanalu 16 (predloga spodaj).</li>
+<li>Alarm se brez potrditve samodejno ponavlja vsakih 3,5–4,5 min (<a href="https://www.itu.int/rec/R-REC-M.541/en" target="_blank" rel="noopener">ITU-R M.541</a>). Ostani na kanalu 16.</li>
+</ol>
+<h3 id="ko-sam-prejmes-tuj-dsc-alarm">Ko sam prejmeš tuj DSC alarm</h3>
+<ol>
+<li>Utišaj zvočni alarm, postaja preklopi na kanal 16 — <strong>poslušaj</strong>.</li>
+<li>Zapiši MMSI, položaj, čas in naravo stiske.</li>
+<li><strong>Ne potrjuj z DSC</strong> — v področju A1 to stori obalna postaja oz. MRCC.</li>
+<li>Če MRCC potrdi: sledi navodilom, pomagaj, če lahko.</li>
+<li>Če si blizu in lahko pomagaš: po potrditvi obalne postaje (ali če te ni) potrdi prejem po govoru na kanalu 16 in obvesti MRCC Koper.</li>
+<li>Če po približno 5 min ni potrditve obalne postaje in ni govora: obvesti MRCC z glasovnim MAYDAY RELAY na kanalu 16. DSC potrditev ali DSC relay pošlješ samo na zahtevo MRCC.</li>
+</ol>
+<h3 id="potrditev-mayday-po-govoru">Potrditev MAYDAY po govoru</h3>
+<p>“MAYDAY, [ime ponesrečenca] ×3, THIS IS [tvoje ime] ×3, RECEIVED MAYDAY.” Nato povej svoj položaj, hitrost in predviden čas prihoda.</p>
+<h3 id="mayday-relay">MAYDAY RELAY</h3>
+<p>Pošlješ ga, ko plovilo v stiski samo ne more oddajati (vidiš rakete, nima radia), ali ko na MAYDAY ni nihče odgovoril. Začneš z “MAYDAY RELAY ×3”, nasloviš “ALL STATIONS ×3” ali “MRCC KOPER ×3”, nato “THIS IS [tvoje ime] ×3” in posreduješ vse znane podatke o plovilu v stiski.</p>
+<h3 id="lazni-alarm">Lažni alarm</h3>
+<p><strong>Postaje ne ugasni.</strong> Takoj prekliči:</p>
+<ol>
+<li>DSC: MENU → Cancel distress (če ga naprava ima).</li>
+<li>Govor na kanalu 16: “ALL STATIONS ×3, THIS IS [ime] ×3, [klicni znak], MMSI […], POSITION […], CANCEL MY DISTRESS ALERT OF [datum] AT [čas] UTC, MASTER [ime], [ime čolna], [klicni znak], MMSI […], [datum, čas UTC].”</li>
+<li>Obvesti MRCC Koper. Pravočasno preklican lažni alarm ni prekršek, nepreklican pa sproži iskanje.</li>
+</ol>
+<h3 id="pan-pan-securite-in-rutinski-dsc-klic-na-postaji">PAN PAN, SECURITE in rutinski DSC klic na postaji</h3>
+<ul>
+<li><strong>PAN PAN</strong>: MENU → All ships → Urgency → kanal 16 → pošlji; nato glasovno PAN PAN na kanalu 16.</li>
+<li><strong>SECURITE</strong>: MENU → All ships → Safety → kanal 16 → pošlji; na kanalu 16 napoved z delovnim kanalom, sporočilo nato na tem delovnem kanalu.</li>
+<li><strong>Rutina</strong>: MENU → Individual → vnesi MMSI → Routine → predlagaj kanal (npr. 72) → pošlji → počakaj potrditev (Able to comply) → preklopi na kanal in kliči po govoru.</li>
+</ul>
+<h3 id="druga-oprema-gmdss">Druga oprema GMDSS</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Naprava</th>
+<th>Kaj je</th>
+<th>Ključno za izpit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EPIRB</td>
+<td>satelitska boja za alarm</td>
+<td>406 MHz prek Cospas-Sarsat (+ 121,5 MHz za iskanje); vklop ročno ali samodejno, ko se v globini 1,5–4 m sproži hidrostatski sprostilec; mora biti registrirana; ob lažni aktivaciji izklopi in obvesti MRCC</td>
+</tr>
+<tr>
+<td>PLB</td>
+<td>osebna boja</td>
+<td>kot EPIRB, ročni vklop, nosiš jo na sebi</td>
+</tr>
+<tr>
+<td>SART (radarski)</td>
+<td>radarski odzivnik v reševalnem splavu</td>
+<td>9 GHz (radar X, 3 cm); na radarju 12 pik od položaja navzven; bližje kot ~1 NM pike preidejo v loke in kroge; doseg ~5 NM do ladje, več do letala</td>
+</tr>
+<tr>
+<td>AIS-SART</td>
+<td>AIS odzivnik</td>
+<td>MMSI 970…; na plotterju krog s križem</td>
+</tr>
+<tr>
+<td>NAVTEX</td>
+<td>sprejemnik varnostnih sporočil</td>
+<td>518 kHz (angleščina) in 490 kHz (nacionalno); doseg do ~400 NM; ID sporočila B1 = postaja, B2 = vrsta (A navigacijsko opozorilo, B vremensko opozorilo, D SAR/pirati, E vremenska napoved; A, B, D ne moreš izklopiti)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="predloge-glasovnih-sporocil">Predloge glasovnih sporočil</h2>
+<p>Vsako predlogo preberi na glas, dokler je ne poveš brez lista. Primer plovila: <strong>SIRENA</strong>, klicni znak S5AB2 (Sierra Five Alfa Bravo Two), MMSI 278123456.</p>
+<h3 id="mayday-klic-sporocilo-kanal-16">MAYDAY (klic + sporočilo) — kanal 16</h3>
+<p>Mnemotehnika <strong>MIPDANIO</strong>: Mayday – Identiteta – Položaj – (Distress) narava – Assistance pomoč – Number oseb – Informacije – Over.</p>
+<pre><code>MAYDAY, MAYDAY, MAYDAY
+THIS IS SIRENA, SIRENA, SIRENA
+CALL SIGN SIERRA FIVE ALFA BRAVO TWO
+MMSI TWO SEVEN EIGHT ONE TWO THREE FOUR FIVE SIX
+MAYDAY SIRENA, CALL SIGN S5AB2, MMSI 278123456
+MY POSITION FOUR FIVE DEGREES THREE TWO DECIMAL FIVE MINUTES NORTH,
+ZERO ONE THREE DEGREES THREE ZERO DECIMAL ZERO MINUTES EAST
+I AM ON FIRE, FIRE IN ENGINE ROOM OUT OF CONTROL
+I REQUIRE IMMEDIATE ASSISTANCE
+THREE PERSONS ON BOARD, PREPARING TO ABANDON TO LIFERAFT
+WHITE MOTOR YACHT, NINE METRES
+OVER
+</code></pre>
+<p>Položaj lahko podaš tudi glede na znano točko: “TWO NAUTICAL MILES WEST OF PIRAN LIGHTHOUSE”.</p>
+<h3 id="potrditev-prejema-mayday">Potrditev prejema MAYDAY</h3>
+<pre><code>MAYDAY
+SIRENA, SIRENA, SIRENA
+THIS IS ALBATROS, ALBATROS, ALBATROS
+RECEIVED MAYDAY
+MY POSITION ... I AM PROCEEDING TO YOUR POSITION, ETA ONE FIVE MINUTES
+OVER
+</code></pre>
+<h3 id="mayday-relay_1">MAYDAY RELAY</h3>
+<pre><code>MAYDAY RELAY, MAYDAY RELAY, MAYDAY RELAY
+ALL STATIONS, ALL STATIONS, ALL STATIONS
+THIS IS ALBATROS, ALBATROS, ALBATROS
+CALL SIGN ..., MMSI ...
+FOLLOWING RECEIVED FROM SAILING YACHT MARE:
+MAYDAY MARE, POSITION ..., DISMASTED AND TAKING WATER,
+FOUR PERSONS ON BOARD, REQUIRES IMMEDIATE ASSISTANCE
+OVER
+</code></pre>
+<h3 id="preklic-laznega-alarma">Preklic lažnega alarma</h3>
+<pre><code>ALL STATIONS, ALL STATIONS, ALL STATIONS
+THIS IS SIRENA, SIRENA, SIRENA
+CALL SIGN S5AB2, MMSI 278123456
+POSITION ...
+CANCEL MY DISTRESS ALERT OF 19 NOVEMBER AT 1015 UTC
+MASTER [IME IN PRIIMEK], SIRENA, S5AB2, MMSI 278123456
+19 NOVEMBER, 1017 UTC
+OUT
+</code></pre>
+<h3 id="pan-pan-kanal-16">PAN PAN — kanal 16</h3>
+<pre><code>PAN PAN, PAN PAN, PAN PAN
+ALL STATIONS, ALL STATIONS, ALL STATIONS
+THIS IS SIRENA, SIRENA, SIRENA
+CALL SIGN S5AB2, MMSI 278123456
+MY POSITION ...
+ENGINE FAILURE, DRIFTING, NO IMMEDIATE DANGER
+I REQUIRE A TOW
+THREE PERSONS ON BOARD
+OVER
+</code></pre>
+<p>Za zdravniški nasvet nasloviš “MRCC KOPER ×3” namesto ALL STATIONS in na koncu poveš “I REQUIRE MEDICAL ADVICE”.</p>
+<h3 id="securite-napoved-na-16-sporocilo-na-delovnem-kanalu">SECURITE — napoved na 16, sporočilo na delovnem kanalu</h3>
+<pre><code>(kanal 16)
+SECURITE, SECURITE, SECURITE
+ALL STATIONS, ALL STATIONS, ALL STATIONS
+THIS IS SIRENA, SIRENA, SIRENA
+CALL SIGN S5AB2, MMSI 278123456
+FOR NAVIGATIONAL WARNING LISTEN ON CHANNEL SEVEN TWO
+OUT
+
+(kanal 72)
+SECURITE, SECURITE, SECURITE
+ALL STATIONS, ALL STATIONS, ALL STATIONS
+THIS IS SIRENA, SIRENA, SIRENA
+FLOATING CONTAINER, DANGER TO NAVIGATION
+IN POSITION ...
+OUT
+</code></pre>
+<h3 id="rutinski-klic-in-preverjanje-postaje-ne-na-16">Rutinski klic in preverjanje postaje (ne na 16)</h3>
+<pre><code>ALBATROS, ALBATROS, ALBATROS
+THIS IS SIRENA, SIRENA, SIRENA
+RADIO CHECK, HOW DO YOU READ? OVER
+— SIRENA, THIS IS ALBATROS, I READ YOU FIVE. OVER
+— ALBATROS, THIS IS SIRENA, RECEIVED, THANK YOU. OUT
+</code></pre>
+<h2 id="kartica-za-zadnji-dan">Kartica za zadnji dan</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Kaj</th>
+<th>Številka</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DSC kanal</td>
+<td>70 (156,525 MHz) — nikoli govor</td>
+</tr>
+<tr>
+<td>Stiska / klic govor</td>
+<td>16 (156,800 MHz)</td>
+</tr>
+<tr>
+<td>SAR na kraju nesreče</td>
+<td>06</td>
+</tr>
+<tr>
+<td>Most–most</td>
+<td>13 (1 W)</td>
+</tr>
+<tr>
+<td>MRCC Koper</td>
+<td>kanala 16 in 12, MMSI 002780200</td>
+</tr>
+<tr>
+<td>MID Slovenija</td>
+<td>278 (Hrvaška 238, Italija 247)</td>
+</tr>
+<tr>
+<td>MMSI obalne postaje</td>
+<td>00 + MID + 4</td>
+</tr>
+<tr>
+<td>MMSI skupine</td>
+<td>0 + MID + 5</td>
+</tr>
+<tr>
+<td>AIS-SART / MOB / EPIRB-AIS</td>
+<td>970 / 972 / 974</td>
+</tr>
+<tr>
+<td>Moč</td>
+<td>25 W / 1 W</td>
+</tr>
+<tr>
+<td>Držanje DISTRESS</td>
+<td>3–5 s</td>
+</tr>
+<tr>
+<td>Ponavljanje DSC alarma</td>
+<td>vsakih 3,5–4,5 min</td>
+</tr>
+<tr>
+<td>Prejem tujega alarma</td>
+<td>čakaj ~5 min na obalno postajo, DSC potrditev le na zahtevo MRCC</td>
+</tr>
+<tr>
+<td>Rutinski klic</td>
+<td>3× v razmaku 2 min, nato pavza ≥ 3 min</td>
+</tr>
+<tr>
+<td>EPIRB</td>
+<td>406 MHz + 121,5 MHz, sprostitev 1,5–4 m</td>
+</tr>
+<tr>
+<td>SART</td>
+<td>9 GHz, 12 pik, ~5 NM</td>
+</tr>
+<tr>
+<td>NAVTEX</td>
+<td>518 kHz / 490 kHz; A, B, D obvezni</td>
+</tr>
+<tr>
+<td>Morsko področje Slovenije</td>
+<td>A1</td>
+</tr>
+<tr>
+<td>Doseg</td>
+<td>2,5 × (√h1 + √h2) NM</td>
+</tr>
+</tbody>
+</table></div>
+<p>Vrstni red prioritet: MAYDAY → PAN PAN → SECURITE → rutina. Tišina: SEELONCE MAYDAY / SEELONCE DISTRESS → PRUDONCE → SEELONCE FEENEE.</p>
+<hr />
+<p><em>Gradivo je pripomoček za učenje in ne nadomešča uradnih predpisov. Pred izpitom preveri aktualne informacije pri Upravi RS za pomorstvo (<a href="https://spot.gov.si/sl/dejavnosti-in-poklici/dovoljenja/potrdilo-o-usposobljenosti-za-upravljanje-s-postajo-vhf-gmdss" target="_blank" rel="noopener">SPOT</a>).</em></p></article>
+</section>
+
+<!-- SIMULATOR -->
+<section id="v-sim" class="view">
+  <div class="card">
+    <div class="row">
+      <select id="scSel"></select>
+      <div class="seg" id="modeSeg"><button data-m="learn" class="on">Učenje</button><button data-m="exam">Izpit</button></div>
+    </div>
+    <div class="row" style="margin-top:8px"><button class="btn primary" id="startBtn">Začni scenarij</button><button class="btn ghost" id="freeBtn">Prosta vaja</button></div>
+  </div>
+
+  <div class="card task" id="taskCard">
+    <h3 id="taskTitle">Izberi scenarij</h3>
+    <div id="taskDesc" class="small muted">Postaja je že vklopljena. Lastno plovilo: SIRENA, klicni znak S5AB2, MMSI 278123456. V načinu Učenje dobiš namige korak za korakom, v načinu Izpit ne.</div>
+    <div class="steps" id="taskSteps"></div>
+    <div id="taskHint"></div>
+    <ul class="errs" id="taskErrs"></ul>
+    <div id="taskRes"></div>
+  </div>
+
+  <div class="radio" id="radio">
+    <div class="rhead"><span><span class="led" id="led"></span>SIM-VHF  DSC CLASS D</span><span id="pwrLbl">25W</span></div>
+    <div class="rtop">
+      <div class="lcd" id="lcd"></div>
+      <div class="dbox">
+        <div class="dlbl">DISTRESS</div>
+        <div class="dwell" id="dwell">
+          <button class="dbtn" id="dbtn">DISTRESS</button>
+          <div class="cover" id="cover">TAP<br>ODPRI<br>POKROV</div>
+        </div>
+        <div class="dlbl" style="color:#9aa">drži 3 s</div>
+      </div>
+    </div>
+    <div class="keys">
+      <button class="key" data-k="16">16/9</button>
+      <button class="key sm" data-k="HL">H/L</button>
+      <button class="key sm" data-k="DW">DW</button>
+      <button class="key menu sm" data-k="MENU">MENU<br>CALL</button>
+      <button class="key" data-k="CHD">CH ▼</button>
+      <button class="key" data-k="CHU">CH ▲</button>
+      <button class="key" data-k="UP">▲</button>
+      <button class="key" data-k="DN">▼</button>
+      <button class="key pwr sm" data-k="PWR">PWR</button>
+      <button class="key sm" data-k="CLR">CLR</button>
+      <button class="key ptt" data-k="PTT">PTT · govor</button>
+      <button class="key" data-k="ENT" style="grid-column:span 4">ENT</button>
+    </div>
+    <div class="kpad" id="kpad">
+      <div class="small muted" style="margin-bottom:6px">Imenik:</div>
+      <div class="dir" id="kdir"></div>
+      <div class="g" id="kg"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Zvočnik in dnevnik</h2>
+    <div class="spk" id="spk"><div class="sys">Tu se izpisuje, kar postaja sprejme in odda.</div></div>
+    <button class="btn wait" id="waitBtn" style="display:none">⏩ Počakaj 5 minut</button>
+  </div>
+
+  <div class="card small muted">
+    <b style="color:var(--ink)">Kako uporabljaš postajo:</b> MENU odpre DSC meni; ▲▼ premikata izbiro (ali tapni vrstico na zaslonu), ENT potrdi, CLR gre nazaj. Za alarm v stiski tapni oranžni pokrov in <b>drži</b> rdečo tipko 3 s. PTT odpre okno za govor: vrstice sporočila tapni v pravilnem vrstnem redu, kot bi jih izgovoril.
+  </div>
+</section>
+
+<!-- TEST -->
+<section id="v-test" class="view">
+  <div id="testHome" class="card">
+    <h2>Testni izpiti</h2>
+    <p class="small muted" style="margin-top:0">Pravi izpit je ustni, zato so tu vprašanja z izbiro odgovora za hitro preverjanje, v zavihku Ustni del pa vadiš odgovarjanje z lastnimi besedami. Cilj: vsaj 85 %.</p>
+    <div class="grid2">
+      <button class="btn primary" data-t="exam">Nov testni izpit (24)</button>
+      <button class="btn" data-t="all">Vsa vprašanja</button>
+      <button class="btn" data-t="s1">Pravila o radijski službi</button>
+      <button class="btn" data-t="s2">Osnove radiotelefonije</button>
+      <button class="btn" data-t="s3">Delo na postaji</button>
+      <button class="btn" data-t="wrong">Ponovi napačne</button>
+    </div>
+    <div class="small muted" id="bestLbl" style="margin-top:10px"></div>
+  </div>
+  <div id="testRun" class="card" style="display:none"></div>
+</section>
+
+<!-- ORAL -->
+<section id="v-oral" class="view">
+  <div class="card">
+    <h2>Ustni del — kartice</h2>
+    <p class="small muted" style="margin-top:0">Preberi vprašanje, odgovori na glas, nato preveri. Kartice z »Še ne znam« se vrnejo na konec kupa.</p>
+    <div class="qhead"><span id="oCount"></span><span id="oKnown"></span></div>
+    <div class="pbar"><i id="oBar" style="width:0"></i></div>
+    <div class="flash"><div class="qtxt" id="oQ"></div><div class="ans" id="oA" style="display:none"></div></div>
+    <div class="row" style="margin-top:12px" id="oBtns"></div>
+  </div>
+</section>
+</main>
+
+<!-- composer -->
+<div class="sheet" id="cmp"><div class="sheet-in">
+  <div class="sheet-h"><div><span class="onair">ON AIR</span><b id="cmpTitle"></b></div><button class="x" id="cmpX">✕</button></div>
+  <div class="small muted" id="cmpHint"></div>
+  <div class="built" id="cmpBuilt"></div>
+  <div class="small muted">Tapni vrstice v vrstnem redu, kot jih izgovoriš (tap na zgornjo vrstico jo vrne):</div>
+  <div class="tiles" id="cmpTiles"></div>
+  <div class="cmsg" id="cmpMsg"></div>
+  <div class="row"><button class="btn" id="cmpUndo">Razveljavi</button><button class="btn primary" id="cmpSend">Oddaj · spusti PTT</button></div>
+</div></div>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const store={get(k,d){try{const v=localStorage.getItem("vhfg_"+k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem("vhfg_"+k,JSON.stringify(v));}catch(e){}}};
+
+/* tabs */
+const HASH={gradivo:"gradivo",simulator:"sim",test:"test",ustni:"oral"};
+const HASHOF={gradivo:"gradivo",sim:"simulator",test:"test",oral:"ustni"};
+function showView(v,noHash){
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.v===v));
+  document.querySelectorAll(".view").forEach(el=>el.classList.toggle("on",el.id==="v-"+v));
+  if(!noHash&&location.hash!=="#"+HASHOF[v]){try{history.replaceState(null,"","#"+HASHOF[v]);}catch(e){}}
+  window.scrollTo(0,0);
+}
+function route(){const h=(location.hash||"").slice(1);if(HASH[h]){showView(HASH[h],true);return true;}
+  const el=h&&document.getElementById(h);if(el&&el.closest("#v-gradivo")){showView("gradivo",true);setTimeout(()=>el.scrollIntoView(),0);return true;}return false;}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showView(b.dataset.v));
+window.addEventListener("hashchange",route);
+document.getElementById("printBtn").onclick=()=>{showView("gradivo");setTimeout(()=>{try{window.print();}catch(e){}},50);};
+
+/* ---------- world constants ---------- */
+const OWN={name:"SIRENA",cs:"S5AB2",mmsi:"278123456",pos:"45°32,5' N, 013°30,0' E"};
+const MARE={name:"MARE",mmsi:"278555111",pos:"45°34,0' N, 013°31,5' E"};
+const MRCC="002780200";
+const DIRECTORY=[{n:"MRCC KOPER",m:MRCC},{n:"ALBATROS",m:"278987654"},{n:"FLOTILJA (skupina)",m:"027800100"}];
+const CHANNELS=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,60,61,62,63,64,65,66,67,68,69,71,72,73,74,77,78,79,80,81,82,83,84,85,86];
+const CHNAME={16:"DISTRESS/CALL",6:"SHIP-SHIP/SAR",13:"BRIDGE-BRIDGE",12:"PORT OPS",72:"SHIP-SHIP",77:"SHIP-SHIP",8:"SHIP-SHIP",15:"ON BOARD 1W",17:"ON BOARD 1W"};
+const NATURES=["UNDESIGNATED","FIRE/EXPLOSION","FLOODING","COLLISION","GROUNDING","LISTING/CAPSIZE","SINKING","DISABLED ADRIFT","ABANDONING SHIP","PIRACY/ATTACK","MAN OVERBOARD"];
+const MONTHS=["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
+
+/* ---------- audio ---------- */
+let AC=null,alarmTimer=null;
+function beep(f,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type="square";g.gain.value=v||0.04;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+(d||0.12));}catch(e){}}
+function alarmOn(){alarmOff();alarmTimer=setInterval(()=>{beep(1300,.15,.05);setTimeout(()=>beep(2100,.15,.05),180);},700);}
+function alarmOff(){if(alarmTimer){clearInterval(alarmTimer);alarmTimer=null;}}
+
+/* ---------- radio state ---------- */
+let R,S=null,TIMERS=[];
+const later=(ms,fn)=>{TIMERS.push(setTimeout(fn,ms));};
+function clearTimers(){TIMERS.forEach(clearTimeout);TIMERS=[];alarmOff();}
+function resetRadio(){R={on:true,ch:16,hi:true,dw:false,screen:null,stack:[],distress:null,pendingNature:null,cover:false,alert:null,holding:null,tx:false,offsetMin:0};}
+function utc(addMin){const d=new Date(Date.now()+((R?R.offsetMin:0)+(addMin||0))*60000);return d;}
+const hhmm=d=>String(d.getUTCHours()).padStart(2,"0")+String(d.getUTCMinutes()).padStart(2,"0");
+const hh_mm=d=>String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0");
+
+function spk(cls,txt){const el=$("#spk");const d=document.createElement("div");d.className=cls;d.textContent=txt;el.appendChild(d);el.scrollTop=el.scrollHeight;}
+function spkClear(){$("#spk").innerHTML="";}
+
+/* ---------- screens ---------- */
+function openScreen(sc){if(R.screen)R.stack.push(R.screen);R.screen=sc;render();}
+function closeAll(){R.screen=null;R.stack=[];hideKpad();render();}
+function back(){R.screen=R.stack.pop()||null;if(!R.screen||R.screen.kind!=="mmsi")hideKpad();if(R.screen&&R.screen.kind==="mmsi")showKpad();render();}
+function list(title,items,opt){return Object.assign({kind:"list",title,items,i:0},opt||{});}
+
+function mainMenu(){
+  const it=[
+    {t:"INDIVIDUAL CALL",f:menuIndividual},
+    {t:"ALL SHIPS CALL",f:menuAllShips},
+    {t:"GROUP CALL",f:menuGroup},
+    {t:"DISTRESS ALERT",f:menuDistress},
+    {t:"TEST CALL",f:menuTest}
+  ];
+  if(R.distress&&R.distress.active) it.push({t:"CANCEL DISTRESS",f:()=>confirmScr("CANCEL DISTRESS?",["PREKLIČI LASTNI","ALARM V STISKI","ENT = DA"],()=>sendCancel())});
+  it.push({t:"CALL LOG",f:()=>openScreen({kind:"info",title:"CALL LOG",lines:(R.logLines&&R.logLines.length?R.logLines.slice(-6):["(prazno)"])})});
+  it.push({t:"OWN MMSI",f:()=>openScreen({kind:"info",title:"OWN MMSI",lines:[OWN.mmsi,OWN.name+"  "+OWN.cs]})});
+  return list("DSC MENU",it);
+}
+function menuIndividual(){
+  mmsiScreen("INDIVIDUAL: MMSI",m=>{
+    const cats=["ROUTINE","URGENCY","SAFETY"].map(c=>({t:c,f:()=>{
+      openScreen(chanScreen(c==="ROUTINE"?72:16,ch=>{
+        confirmScr("INDIVIDUAL CALL",["TO  "+m+" "+dirName(m),"CAT "+c,"CH  "+ch],()=>sendIndividual(m,c,ch));
+      }));
+    }}));
+    openScreen(list("CATEGORY",cats));
+  });
+}
+function menuAllShips(){
+  const cats=["URGENCY","SAFETY"].map(c=>({t:c,f:()=>{
+    openScreen(chanScreen(16,ch=>{confirmScr("ALL SHIPS CALL",["CAT "+c,"CH  "+ch],()=>sendAllShips(c,ch));}));
+  }}));
+  openScreen(list("CATEGORY",cats));
+}
+function menuGroup(){
+  mmsiScreen("GROUP: MMSI",m=>{
+    openScreen(chanScreen(72,ch=>{confirmScr("GROUP CALL",["TO  "+m,"CH  "+ch],()=>sendGroup(m,ch));}));
+  });
+}
+function menuDistress(){
+  const items=NATURES.map(n=>({t:n,f:()=>{
+    R.pendingNature=n;R.screen=null;R.stack=[];
+    R.info={t:"NATURE: "+n,l:["ODPRI POKROV IN","DRŽI DISTRESS 3 s"]};
+    render();emit({type:"nature",nature:n});
+  }}));
+  openScreen(list("NATURE OF DISTRESS",items));
+}
+function menuTest(){
+  mmsiScreen("TEST: MMSI",m=>{confirmScr("TEST CALL",["TO  "+m+" "+dirName(m)],()=>sendTest(m));});
+}
+function dirName(m){const d=DIRECTORY.find(x=>x.m===m);return d?d.n:"";}
+function chanScreen(def,done){const opts=[16,6,8,13,72,77];const items=opts.map(c=>({t:"CH "+String(c).padStart(2,"0")+"  "+(CHNAME[c]||""),f:()=>done(c)}));const sc=list("WORKING CHANNEL",items);sc.i=Math.max(0,opts.indexOf(def));return sc;}
+function confirmScr(title,lines,fn){openScreen({kind:"confirm",title,lines,fn});}
+function mmsiScreen(title,done){openScreen({kind:"mmsi",title,val:"",done});showKpad();}
+function logLine(s){R.logLines=R.logLines||[];R.logLines.push(hh_mm(utc())+" "+s);}
+
+/* keypad */
+function showKpad(){$("#kpad").classList.add("on");}
+function hideKpad(){$("#kpad").classList.remove("on");}
+(function buildKpad(){
+  $("#kdir").innerHTML=DIRECTORY.map(d=>`<button data-m="${d.m}">${esc(d.n)}</button>`).join("");
+  $("#kdir").onclick=e=>{const b=e.target.closest("button");if(!b||!R.screen||R.screen.kind!=="mmsi")return;R.screen.val=b.dataset.m;render();};
+  const keys=["1","2","3","4","5","6","7","8","9","⌫","0","OK"];
+  $("#kg").innerHTML=keys.map(k=>`<button data-d="${k}" class="${k==="OK"?"ok":""}">${k}</button>`).join("")+`<button data-d="X" style="grid-column:span 4;background:#4a3a3a">Prekliči</button>`;
+  $("#kg").onclick=e=>{const b=e.target.closest("button");if(!b||!R.screen||R.screen.kind!=="mmsi")return;const d=b.dataset.d;const sc=R.screen;
+    if(d==="⌫")sc.val=sc.val.slice(0,-1);else if(d==="X"){back();return;}else if(d==="OK"){commitMmsi();return;}else if(sc.val.length<9)sc.val+=d;beep(900,.03,.02);render();};
+})();
+function commitMmsi(){const sc=R.screen;if(sc.val.length!==9){sc.err="MMSI = 9 ŠTEVK";render();return;}hideKpad();sc.err=null;sc.done(sc.val);}
+
+/* ---------- DSC actions ---------- */
+function txFlash(){R.tx=true;render();later(700,()=>{R.tx=false;render();});}
+function sendIndividual(m,c,ch){closeAll();txFlash();spk("tx","DSC ODDAN → INDIVIDUAL "+m+" "+dirName(m)+", "+c+", CH "+ch);logLine("TX IND "+m);R.info={t:"CALL SENT",l:["INDIVIDUAL "+c,"TO "+m,"CH "+ch,"WAITING ACK..."]};render();emit({type:"dsc_individual",mmsi:m,cat:c,ch});}
+function sendAllShips(c,ch){closeAll();txFlash();spk("tx","DSC ODDAN → ALL SHIPS, "+c+", CH "+ch);logLine("TX ALL "+c);R.ch=ch;R.info={t:"ALL SHIPS SENT",l:[c,"VOICE ON CH "+ch]};render();emit({type:"dsc_allships",cat:c,ch});}
+function sendGroup(m,ch){closeAll();txFlash();spk("tx","DSC ODDAN → GROUP "+m+", CH "+ch);logLine("TX GRP "+m);R.ch=ch;render();emit({type:"dsc_group",mmsi:m,ch});}
+function sendTest(m){closeAll();txFlash();spk("tx","DSC ODDAN → TEST "+m+" "+dirName(m));logLine("TX TEST "+m);R.info={t:"TEST SENT",l:["TO "+m,"WAITING ACK..."]};render();emit({type:"dsc_test",mmsi:m});}
+function sendCancel(){closeAll();txFlash();R.distress.active=false;R.distress.cancelled=true;spk("tx","DSC ODDAN → DISTRESS CANCEL (preklic lastnega alarma)");logLine("TX CANCEL");R.ch=16;R.info={t:"CANCEL SENT",l:["SLEDI GLASOVNI","PREKLIC NA CH 16"]};render();emit({type:"dsc_cancel"});}
+function sendDistress(){
+  const nature=R.pendingNature||"UNDESIGNATED";R.pendingNature=null;
+  R.distress={active:true,nature,acked:false,time:utc()};R.ch=16;R.hi=true;R.screen=null;R.stack=[];R.info=null;hideKpad();
+  txFlash();beep(1500,.4,.06);
+  spk("tx","DSC DISTRESS ALERT ODDAN: "+nature+", "+OWN.pos+", "+hh_mm(utc())+" UTC");logLine("TX DISTRESS");
+  render();emit({type:"dsc_distress",nature});
+}
+function distressAcked(){if(!R.distress)return;R.distress.acked=true;beep(1800,.3,.05);spk("dsc","DSC SPREJET: DISTRESS ACK od "+MRCC+" MRCC KOPER");logLine("RX DIST ACK MRCC");render();emit({type:"rx_distress_ack"});}
+
+/* incoming distress */
+function incomingDistress(){
+  R.alert={from:MARE.mmsi,name:MARE.name,nature:"SINKING",pos:MARE.pos,time:utc(),silenced:false};
+  R.ch=16;R.screen=list("!! DISTRESS RCVD !!",[{t:"ALARM OFF (utišaj)",f:()=>silence()},{t:"DSC ACK",f:()=>{emit({type:"dsc_ack"});}},{t:"DSC RELAY ALL SHIPS",f:()=>{emit({type:"dsc_relay"});}}],{head:["FROM "+MARE.mmsi+" "+MARE.name,"SINKING",MARE.pos.replace(", "," "),hh_mm(R.alert.time)+" UTC"]});R.stack=[];
+  alarmOn();spk("dsc","DSC SPREJET: DISTRESS od "+MARE.mmsi+" MARE — SINKING — "+MARE.pos+" — "+hh_mm(R.alert.time)+" UTC");logLine("RX DISTRESS "+MARE.mmsi);
+  render();
+}
+function silence(){if(!R.alert||R.alert.silenced)return;R.alert.silenced=true;alarmOff();R.screen=null;R.stack=[];R.info={t:"DISTRESS RCVD",l:["FROM "+MARE.mmsi+" MARE","SINKING","LISTEN CH 16"]};render();emit({type:"alarm_silenced"});}
+
+/* ---------- render LCD ---------- */
+function render(){
+  const lcd=$("#lcd");$("#led").className="led"+(R.on?(R.tx?" tx":""):" off");$("#pwrLbl").textContent=R.on?(R.hi?"25W":"1W"):"";
+  $("#dwell").classList.toggle("open",R.cover);
+  if(!R.on){lcd.className="lcd off";lcd.innerHTML="";return;}
+  lcd.className="lcd";
+  const bar=`<div class="bar"><span>UTC ${hh_mm(utc())}</span><span>${R.hi?"HI 25W":"LO 1W"}${R.dw?" DW":""}${R.tx?" TX":""}</span></div>`;
+  let h="";
+  const sc=R.screen;
+  if(sc&&sc.kind==="list"){
+    const start=Math.max(0,Math.min(sc.i-3,sc.items.length-(sc.head?3:7)));const vis=sc.head?3:7;
+    h+=`<div class="ttl"><span>${esc(sc.title)}</span><span>${sc.i+1}/${sc.items.length}</span></div>`;
+    if(sc.head)h+=sc.head.map(l=>`<div class="ln">${esc(l)}</div>`).join("");
+    h+=sc.items.slice(start,start+vis).map((it,k)=>`<div class="li${start+k===sc.i?" sel":""}" data-i="${start+k}">${esc(it.t)}</div>`).join("");
+    h+=`<div class="soft"><span>CLR:BACK</span><span>ENT:SELECT</span></div>`;
+  }else if(sc&&sc.kind==="mmsi"){
+    h+=`<div class="ttl"><span>${esc(sc.title)}</span></div><div style="font-size:22px;font-weight:800;margin-top:10px;letter-spacing:2px">${esc((sc.val+"_________").slice(0,9))}</div><div class="ln" style="margin-top:6px">${esc(dirName(sc.val))}</div>${sc.err?`<div class="ln">${esc(sc.err)}</div>`:""}<div class="soft"><span>CLR:BACK</span><span>OK:NEXT</span></div>`;
+  }else if(sc&&(sc.kind==="confirm"||sc.kind==="info")){
+    h+=`<div class="ttl"><span>${esc(sc.title)}</span></div>`+sc.lines.map(l=>`<div class="ln">${esc(l)}</div>`).join("")+`<div class="soft"><span>CLR:BACK</span><span>${sc.kind==="confirm"?"ENT:SEND":""}</span></div>`;
+  }else{
+    h+=bar+`<div class="chbig">${String(R.ch).padStart(2,"0")}</div><div class="chlbl">${esc(CHNAME[R.ch]||"")}</div>`;
+    if(R.info)h+=`<div style="position:absolute;right:9px;top:26px;text-align:right;font-size:11.5px;font-weight:700;max-width:58%">${esc(R.info.t)}<br>${R.info.l.map(esc).join("<br>")}</div>`;
+    h+=`<div class="pos">GPS ${esc(OWN.pos)}</div>`;
+    let st="",blink=false;
+    if(R.distress&&R.distress.active){st=R.distress.acked?"DISTRESS ACK: MRCC KOPER":"DISTRESS SENT · AUTO REPEAT ~4 MIN";blink=!R.distress.acked;}
+    else if(R.alert&&!R.alert.silenced){st="!! DISTRESS RECEIVED !!";blink=true;}
+    else st="DSC CH70 WATCH"+(R.dw?" · DW 16+"+R.ch:"");
+    h+=`<div class="stat${blink?" blink":""}">${esc(st)}</div>`;
+  }
+  if(R.holding!==null)h+=`<div class="hold"><div>DISTRESS</div><b>${Math.ceil(R.holding)}</b><div>DRŽI ...</div></div>`;
+  lcd.innerHTML=h;
+}
+$("#lcd").onclick=e=>{const li=e.target.closest(".li");if(!li||!R.screen||R.screen.kind!=="list")return;R.screen.i=+li.dataset.i;render();key("ENT");};
+
+/* ---------- keys ---------- */
+function stepCh(d){let i=CHANNELS.indexOf(R.ch);if(i<0)i=CHANNELS.indexOf(16);i=(i+d+CHANNELS.length)%CHANNELS.length;setCh(CHANNELS[i]);}
+function setCh(c){R.ch=c;R.info=null;render();emit({type:"channel",ch:c});}
+function key(k){
+  beep(1000,.03,.02);
+  if(k==="PWR"){R.on=!R.on;if(!R.on){alarmOff();hideKpad();}render();emit({type:R.on?"power_on":"power_off"});return;}
+  if(!R.on)return;
+  const sc=R.screen;
+  if(R.alert&&!R.alert.silenced&&k==="CLR"){silence();return;}
+  switch(k){
+    case "16":if(!(R.alert&&!R.alert.silenced))closeAll();setCh(16);break;
+    case "HL":R.hi=!R.hi;render();emit({type:"power",hi:R.hi});break;
+    case "DW":R.dw=!R.dw;render();break;
+    case "MENU":if(R.alert&&!R.alert.silenced)return;R.stack=[];R.screen=null;hideKpad();openScreen(mainMenu());break;
+    case "CLR":if(sc){back();}else{R.info=null;render();}break;
+    case "UP":case "DN":
+      if(sc&&sc.kind==="list"){sc.i=(sc.i+(k==="UP"?-1:1)+sc.items.length)%sc.items.length;render();}
+      else if(!sc)stepCh(k==="UP"?1:-1);break;
+    case "CHU":case "CHD":if(!sc)stepCh(k==="CHU"?1:-1);break;
+    case "ENT":
+      if(sc&&sc.kind==="list")sc.items[sc.i].f();
+      else if(sc&&sc.kind==="confirm")sc.fn();
+      else if(sc&&sc.kind==="mmsi")commitMmsi();
+      else if(sc&&sc.kind==="info")back();
+      break;
+    case "PTT":openComposer();break;
+  }
+}
+document.querySelectorAll(".key").forEach(b=>b.addEventListener("click",()=>key(b.dataset.k)));
+
+/* distress cover + hold */
+$("#cover").onclick=()=>{if(!R.on)return;R.cover=true;render();emit({type:"cover_open"});};
+let holdT=null;
+function holdStart(e){e.preventDefault();if(!R.on||!R.cover)return;R.holding=3;render();const t0=Date.now();
+  holdT=setInterval(()=>{const left=3-(Date.now()-t0)/1000;if(left<=0){clearInterval(holdT);holdT=null;R.holding=null;R.cover=false;sendDistress();}else{R.holding=left;if(Math.ceil(left)!==Math.ceil(left+.1))beep(1200,.05,.04);render();}},100);}
+function holdEnd(){if(holdT){clearInterval(holdT);holdT=null;R.holding=null;R.info={t:"DISTRESS",l:["DRŽI TIPKO","CELE 3 s"]};render();emit({type:"distress_short"});}}
+const db=$("#dbtn");db.addEventListener("pointerdown",holdStart);["pointerup","pointerleave","pointercancel"].forEach(ev=>db.addEventListener(ev,holdEnd));
+db.addEventListener("contextmenu",e=>e.preventDefault());
+
+/* ---------- voice messages ---------- */
+const L={
+  m3:"MAYDAY, MAYDAY, MAYDAY",p3:"PAN PAN, PAN PAN, PAN PAN",s3:"SECURITE, SECURITE, SECURITE",r3:"MAYDAY RELAY, MAYDAY RELAY, MAYDAY RELAY",
+  all:"ALL STATIONS, ALL STATIONS, ALL STATIONS",ti:"THIS IS SIRENA, SIRENA, SIRENA",id:"CALL SIGN S5AB2, MMSI 278123456",
+  pos:"MY POSITION "+OWN.pos,wpos:"MY POSITION "+MARE.pos,over:"OVER",out:"OUT",oao:"OVER AND OUT"
+};
+function cancelLine(){const d=(S&&S.alertTime)||utc(-2);return "CANCEL MY DISTRESS ALERT OF "+d.getUTCDate()+" "+MONTHS[d.getUTCMonth()]+" AT "+hhmm(d)+" UTC";}
+const MSG={
+  mayday_fire:()=>({title:"MAYDAY — požar",hint:"MIPDANIO: Mayday ×3 · identiteta · Mayday + ime · položaj · narava · pomoč · število oseb · Over",
+    slots:[[L.m3],[L.ti],[L.id],["MAYDAY SIRENA, CALL SIGN S5AB2, MMSI 278123456"],[L.pos],["FIRE IN ENGINE ROOM, OUT OF CONTROL"],["I REQUIRE IMMEDIATE ASSISTANCE"],["THREE PERSONS ON BOARD"],[L.over]],
+    extra:[L.all,L.p3,L.wpos,L.out]}),
+  mayday_sink:()=>({title:"MAYDAY — potapljanje",hint:"Enak vrstni red kot vsak MAYDAY: najprej klic, nato sporočilo.",
+    slots:[[L.m3],[L.ti],[L.id],["MAYDAY SIRENA, CALL SIGN S5AB2, MMSI 278123456"],[L.pos],["COLLIDED WITH FLOATING OBJECT, SINKING"],["I REQUIRE IMMEDIATE ASSISTANCE"],["TWO PERSONS ON BOARD, ABANDONING TO LIFERAFT"],[L.over]],
+    extra:[L.all,L.r3,L.wpos,L.oao]}),
+  cancel:()=>({title:"Preklic lažnega alarma",hint:"ALL STATIONS ×3 · identiteta · položaj · CANCEL MY DISTRESS ALERT OF (datum, čas UTC) · poveljnik · Out",
+    slots:[[L.all],[L.ti],[L.id],["POSITION "+OWN.pos],[cancelLine()],["MASTER SIRENA, S5AB2, MMSI 278123456"],[L.out]],
+    extra:[L.m3,"SEELONCE FEENEE",L.oao]}),
+  panpan:()=>({title:"PAN PAN — okvara motorja",hint:"PAN PAN ×3 · ALL STATIONS ×3 · identiteta · položaj · težava · potrebna pomoč · osebe · Over",
+    slots:[[L.p3],[L.all],[L.ti],[L.id],[L.pos],["ENGINE FAILURE, DRIFTING, NO IMMEDIATE DANGER"],["I REQUIRE A TOW"],["THREE PERSONS ON BOARD"],[L.over]],
+    extra:[L.m3,"I REQUIRE IMMEDIATE ASSISTANCE",L.s3]}),
+  sec_ann:()=>({title:"SECURITE — napoved na CH 16",hint:"Na 16 samo napoved in delovni kanal; vsebina gre na delovni kanal.",
+    slots:[[L.s3],[L.all],[L.ti],[L.id],["FOR NAVIGATIONAL WARNING LISTEN ON CHANNEL SEVEN TWO"],[L.out]],
+    extra:["FLOATING CONTAINER, DANGER TO NAVIGATION",L.over,L.p3]}),
+  sec_msg:()=>({title:"SECURITE — sporočilo na CH 72",hint:"Ponovi SECURITE in identiteto, nato vsebina in Out.",
+    slots:[[L.s3],[L.all],[L.ti],["FLOATING CONTAINER, DANGER TO NAVIGATION"],["IN POSITION 45°31,8' N, 013°28,4' E"],[L.out]],
+    extra:[L.r3,L.over,"I REQUIRE A TOW"]}),
+  routine:()=>({title:"Rutinski klic na CH 72",hint:"Po DSC potrditvi: ime klicane postaje · THIS IS · tvoje ime · vsebina · Over",
+    slots:[["ALBATROS"],["THIS IS SIRENA"],["REQUEST YOUR ETA PIRAN MARINA"],[L.over]],
+    extra:[L.m3,L.all,L.out]}),
+  ack:()=>({title:"Potrditev prejema MAYDAY",hint:"MAYDAY · ime ponesrečenca ×3 · THIS IS · tvoje ime ×3 · RECEIVED MAYDAY · tvoj položaj in ETA · Over",
+    slots:[["MAYDAY"],["MARE, MARE, MARE"],[L.ti],["RECEIVED MAYDAY"],[L.pos+", PROCEEDING TO YOUR POSITION, ETA 15 MINUTES"],[L.over]],
+    extra:[L.r3,"SEELONCE FEENEE",L.out]}),
+  relay:()=>({title:"MAYDAY RELAY",hint:"MAYDAY RELAY ×3 · naslov (MRCC ali ALL STATIONS) ×3 · THIS IS ... · podatki ponesrečenca · Over",
+    slots:[[L.r3],["MRCC KOPER, MRCC KOPER, MRCC KOPER",L.all],[L.ti],[L.id],["FOLLOWING RECEIVED FROM MARE, MMSI 278555111"],["MAYDAY MARE, POSITION "+MARE.pos],["SINKING, FOUR PERSONS ON BOARD, REQUIRES IMMEDIATE ASSISTANCE"],[L.over]],
+    extra:[L.m3,"RECEIVED MAYDAY",L.out]})
+};
+
+/* ---------- composer ---------- */
+let C=null;
+function openComposer(){
+  if(!R.on)return;
+  const st=S&&!S.done?S.def.steps[S.step]:null;
+  const mk=st&&st.voice?MSG[st.voice]:null;
+  R.tx=true;render();
+  if(!mk){
+    C={free:true};$("#cmpTitle").textContent=`CH ${String(R.ch).padStart(2,"0")} · ${R.hi?"25 W":"1 W"}`;
+    $("#cmpHint").textContent=S&&!S.done?"Na tej točki scenarija govor ni potreben.":"Prosta vaja: izberi scenarij, da dobiš sporočilo za sestavljanje.";
+    $("#cmpBuilt").innerHTML="";$("#cmpTiles").innerHTML="";$("#cmpMsg").textContent="";
+    $("#cmp").classList.add("on");
+    if(S&&!S.done)emit({type:"voice_unexpected",ch:R.ch});
+    return;
+  }
+  const m=mk();const all=shuffle(m.slots.map(s=>s[0]).concat(m.slots.filter(s=>s.length>1).flatMap(s=>s.slice(1))).concat(m.extra));
+  C={m,id:st.voice,pool:[...new Set(all)],built:[]};
+  $("#cmpTitle").textContent=`${m.title} · CH ${String(R.ch).padStart(2,"0")} · ${R.hi?"25 W":"1 W"}`;
+  $("#cmpHint").textContent=S.mode==="learn"?m.hint:"";
+  $("#cmpMsg").textContent="";
+  drawComposer();$("#cmp").classList.add("on");
+}
+function drawComposer(mark){
+  const b=$("#cmpBuilt");b.innerHTML=C.built.map((t,i)=>`<div data-i="${i}" class="${mark&&mark[i]?mark[i]:""}">${esc(t)}</div>`).join("")||'<span class="muted small">… tu se sestavlja tvoje sporočilo</span>';
+  $("#cmpTiles").innerHTML=C.pool.filter(t=>!C.built.includes(t)).map(t=>`<button data-t="${esc(t)}">${esc(t)}</button>`).join("");
+}
+$("#cmpTiles").onclick=e=>{const b=e.target.closest("button");if(!b||!C||C.free)return;C.built.push(b.dataset.t);$("#cmpMsg").textContent="";drawComposer();};
+$("#cmpBuilt").onclick=e=>{const d=e.target.closest("div[data-i]");if(!d||!C||C.free)return;C.built.splice(+d.dataset.i,1);drawComposer();};
+$("#cmpUndo").onclick=()=>{if(C&&!C.free){C.built.pop();drawComposer();}};
+function closeComposer(){$("#cmp").classList.remove("on");C=null;R.tx=false;render();}
+$("#cmpX").onclick=closeComposer;
+$("#cmpSend").onclick=()=>{
+  if(!C||C.free){closeComposer();return;}
+  const sl=C.m.slots;let wrong=-1;
+  for(let i=0;i<Math.max(sl.length,C.built.length);i++){if(i>=sl.length||i>=C.built.length||!sl[i].includes(C.built[i])){wrong=i;break;}}
+  const ok=wrong<0;const ch=R.ch;
+  if(ok){
+    spk("tx","GOVOR CH "+ch+": "+C.built.join(" / "));
+    const id=C.id;closeComposer();emit({type:"voice",id,ok:true,ch});
+  }else{
+    if(S.mode==="learn"){
+      const mark=C.built.map((t,i)=>i<wrong?"right":(i===wrong?"wrong":""));drawComposer(mark);
+      $("#cmpMsg").innerHTML=wrong>=C.built.length?`<span style="color:var(--warn)">Sporočilo še ni popolno — manjka vrstica ${wrong+1}.</span>`:`<span style="color:var(--bad)">Vrstica ${wrong+1} ni prava na tem mestu.</span>`;
+    }else{$("#cmpMsg").innerHTML='<span style="color:var(--bad)">Sporočilo ni pravilno. Poskusi znova.</span>';}
+    emit({type:"voice",id:C.id,ok:false,ch});
+  }
+};
+
+/* ---------- scenarios ---------- */
+const isDistress=e=>e.type==="dsc_distress";
+const SC=[
+ {id:"fire",title:"MAYDAY: požar na krovu",desc:"V strojnici SIRENE je izbruhnil požar, ki ga ne morete pogasiti. Na krovu so 3 osebe. Pošlji DOLOČEN DSC alarm (narava: požar) in nato MAYDAY po govoru.",
+  steps:[
+   {h:"MENU → DISTRESS ALERT → FIRE/EXPLOSION, nato tapni oranžni pokrov in drži DISTRESS 3 s.",match:isDistress,forbid:e=>isDistress(e)&&e.nature!=="FIRE/EXPLOSION"?{msg:"Izbrana narava ni FIRE/EXPLOSION — čas je bil za določen alarm.",minor:true}:null},
+   {h:"Postaja je preklopila na CH 16. Počakaj DSC potrditev MRCC Koper, nato PTT in oddaj MAYDAY.",voice:"mayday_fire",ch:16,match:e=>e.type==="voice"&&e.ok&&e.ch===16}
+  ],allowDistress:true,react:e=>{if(isDistress(e))later(5000,distressAcked);}},
+ {id:"sink",title:"MAYDAY: hitro potapljanje (nedoločen alarm)",desc:"Po trku s plavajočim predmetom SIRENA hitro tone. Na krovu sta 2 osebi, pripravljata splav. Ni časa za menije.",
+  steps:[
+   {h:"Brez menija: tapni pokrov in takoj drži DISTRESS 3 s (nedoločen alarm).",match:isDistress},
+   {h:"PTT na CH 16 in oddaj MAYDAY (ne čakaj predolgo na potrditev).",voice:"mayday_sink",ch:16,match:e=>e.type==="voice"&&e.ok&&e.ch===16}
+  ],allowDistress:true,react:e=>{if(isDistress(e))later(6000,distressAcked);}},
+ {id:"false",title:"Lažni alarm: preklic",desc:"Med čiščenjem si pomotoma sprožil DSC alarm v stiski. Alarm je že odšel. Pravilno ga prekliči.",
+  setup:()=>{R.distress={active:true,nature:"UNDESIGNATED",acked:false,time:utc(-1)};S.alertTime=R.distress.time;spk("tx","DSC DISTRESS ALERT ODDAN (pomotoma): UNDESIGNATED, "+hh_mm(S.alertTime)+" UTC");},
+  steps:[
+   {h:"Postaje NE ugasni. MENU → CANCEL DISTRESS → ENT.",match:e=>e.type==="dsc_cancel"},
+   {h:"Na CH 16 oddaj glasovni preklic (PTT).",voice:"cancel",ch:16,match:e=>e.type==="voice"&&e.ok&&e.ch===16,after:()=>spk("sys","Nato obvesti še MRCC Koper (telefon ali CH 16), da gre za lažni alarm.")}
+  ],forbid:e=>e.type==="power_off"?{msg:"Postaje ne smeš ugasniti! Alarm bi se lahko ponavljal, reševalci pa ne bi dobili preklica."}:null},
+ {id:"panpan",title:"PAN PAN: okvara motorja",desc:"Motor je odpovedal 3 NM od obale. Morje je mirno, neposredne nevarnosti ni, potrebuješ vleko. 3 osebe na krovu.",
+  steps:[
+   {h:"MENU → ALL SHIPS CALL → URGENCY → CH 16 → ENT.",match:e=>e.type==="dsc_allships"&&e.cat==="URGENCY"&&e.ch===16,forbid:e=>e.type==="dsc_allships"&&e.cat!=="URGENCY"?{msg:"Okvara brez neposredne nevarnosti je URGENCY (PAN PAN), ne "+e.cat+".",minor:true}:(e.type==="dsc_allships"&&e.ch!==16?{msg:"Pri URGENCY je kanal za govor 16.",minor:true}:null)},
+   {h:"Na CH 16 oddaj PAN PAN (PTT).",voice:"panpan",ch:16,match:e=>e.type==="voice"&&e.ok&&e.ch===16}
+  ]},
+ {id:"securite",title:"SECURITE: plavajoč zabojnik",desc:"Na položaju 45°31,8' N, 013°28,4' E opaziš plavajoč zabojnik, nevaren za plovbo. Opozori ostala plovila.",
+  steps:[
+   {h:"MENU → ALL SHIPS CALL → SAFETY → CH 16 → ENT.",match:e=>e.type==="dsc_allships"&&e.cat==="SAFETY",forbid:e=>e.type==="dsc_allships"&&e.cat!=="SAFETY"?{msg:"Navigacijsko opozorilo je SAFETY (SECURITE).",minor:true}:null},
+   {h:"Na CH 16 oddaj napoved SECURITE z delovnim kanalom 72.",voice:"sec_ann",ch:16,match:e=>e.type==="voice"&&e.ok&&e.ch===16},
+   {h:"Preklopi na kanal 72 (CH ▲▼).",match:e=>e.type==="channel"&&e.ch===72},
+   {h:"Na CH 72 oddaj vsebino opozorila.",voice:"sec_msg",ch:72,match:e=>e.type==="voice"&&e.ok&&e.ch===72}
+  ]},
+ {id:"routine",title:"Rutinski DSC klic",desc:"Pokliči jadrnico ALBATROS (MMSI 278987654) in se dogovori za pogovor na kanalu 72. Nato jo vprašaj za ETA v marino Piran.",
+  steps:[
+   {h:"MENU → INDIVIDUAL CALL → vnesi 278987654 (ali Imenik) → ROUTINE → CH 72 → ENT.",match:e=>e.type==="dsc_individual"&&e.mmsi==="278987654"&&e.cat==="ROUTINE"&&e.ch===72,
+    forbid:e=>e.type==="dsc_individual"&&(e.mmsi!=="278987654"?{msg:"Napačen MMSI.",minor:true}:(e.cat!=="ROUTINE"?{msg:"Pogovor med čolni je ROUTINE.",minor:true}:(e.ch!==72?{msg:"Dogovorjeni kanal je 72.",minor:true}:null)))},
+   {h:"Počakaj potrditev (ABLE TO COMPLY). Postaja sama preklopi na 72. Nato PTT in pokliči ALBATROS.",voice:"routine",ch:72,match:e=>e.type==="voice"&&e.ok&&e.ch===72&&S.flags.acked,after:()=>later(1500,()=>spk("rx","ALBATROS (CH72): SIRENA, THIS IS ALBATROS, MY ETA PIRAN MARINA 1700 UTC, OVER")),forbid:e=>e.type==="voice"&&e.ok&&!S.flags.acked?{msg:"Najprej počakaj DSC potrditev.",minor:true}:null}
+  ],react:e=>{if(e.type==="dsc_individual"&&e.mmsi==="278987654"&&e.cat==="ROUTINE"&&e.ch===72)later(3500,()=>{S.flags.acked=true;R.ch=72;R.info={t:"ACK RCVD",l:["ALBATROS","ABLE TO COMPLY","CH 72"]};beep(1600,.2,.05);spk("dsc","DSC SPREJET: ACK od 278987654 ALBATROS — ABLE TO COMPLY — CH 72");logLine("RX ACK 278987654");render();});}},
+ {id:"rx_ack",title:"Prejem alarma: MRCC se odzove",desc:"Postaja prejme DSC alarm v stiski. Si 2 NM od ponesrečenca in lahko pomagaš.",
+  setup:()=>later(1500,incomingDistress),
+  steps:[
+   {h:"Utišaj alarm (CLR ali ALARM OFF). DSC ACK in RELAY ne pošiljaj.",match:e=>e.type==="alarm_silenced"},
+   {h:"Ostani na CH 16 in poslušaj. Ko MRCC Koper potrdi, potrdi prejem po govoru (PTT).",voice:"ack",ch:16,match:e=>e.type==="voice"&&e.ok&&e.ch===16&&S.flags.mrcc,forbid:e=>e.type==="voice"&&e.ok&&!S.flags.mrcc?{msg:"V A1 najprej počakaj, da alarm potrdi obalna postaja.",minor:true}:null}
+  ],showWait:false,
+  react:e=>{if(e.type==="alarm_silenced"){
+     later(1500,()=>spk("rx","MARE (CH16): MAYDAY MAYDAY MAYDAY, THIS IS MARE MARE MARE, MMSI 278555111, MAYDAY MARE, POSITION "+MARE.pos+", SINKING, FOUR PERSONS ON BOARD, REQUIRE IMMEDIATE ASSISTANCE, OVER"));
+     later(5000,()=>{S.flags.mrcc=true;spk("dsc","DSC SPREJET: DISTRESS ACK od "+MRCC+" MRCC KOPER za 278555111");spk("rx","MRCC KOPER (CH16): MAYDAY, MARE MARE MARE, THIS IS MRCC KOPER MRCC KOPER MRCC KOPER, RECEIVED MAYDAY. ALL VESSELS IN VICINITY REPORT. OVER");beep(1600,.2,.05);});}}},
+ {id:"rx_relay",title:"Prejem alarma: ni odziva obale",desc:"Postaja prejme DSC alarm v stiski. Si 12 NM stran. Nihče ga ne potrdi.",
+  setup:()=>later(1500,incomingDistress),
+  steps:[
+   {h:"Utišaj alarm. DSC ACK/RELAY ne pošiljaj.",match:e=>e.type==="alarm_silenced"},
+   {h:"Poslušaj CH 16. Ker ni odziva, počakaj (gumb ⏩ 5 minut pod zvočnikom).",match:e=>e.type==="wait",forbid:e=>e.type==="voice"&&e.ok?{msg:"Prehitro — počakaj ~5 min na obalno postajo.",minor:true}:null},
+   {h:"Obalna postaja se ne odziva: oddaj MAYDAY RELAY na CH 16 (naslov MRCC KOPER ali ALL STATIONS).",voice:"relay",ch:16,match:e=>e.type==="voice"&&e.ok&&e.ch===16&&S.flags.waited}
+  ],showWait:true,
+  react:e=>{if(e.type==="alarm_silenced")later(1500,()=>spk("rx","MARE (CH16, šibko): MAYDAY MAYDAY MAYDAY, THIS IS MARE MARE MARE, MMSI 278555111, POSITION "+MARE.pos+", SINKING, FOUR PERSONS ON BOARD, OVER"));
+    if(e.type==="wait"){S.flags.waited=true;R.offsetMin+=5;render();spk("sys","(minilo je 5 minut — ni DSC potrditve obalne postaje, ni odgovora na CH 16)");}}},
+ {id:"test",title:"Testni DSC klic",desc:"Pred izplutjem preveri delovanje DSC postaje s testnim klicem MRCC Koper.",
+  steps:[
+   {h:"MENU → TEST CALL → 002780200 (Imenik: MRCC KOPER) → ENT.",match:e=>e.type==="dsc_test"&&e.mmsi===MRCC,forbid:e=>e.type==="voice_unexpected"&&e.ch===16?{msg:"Preverjanje postaje ne izvajaš z govorom na CH 16.",minor:true}:null}
+  ],react:e=>{if(e.type==="dsc_test"&&e.mmsi===MRCC)later(3000,()=>{R.info={t:"TEST ACK",l:["FROM 002780200","MRCC KOPER"]};beep(1600,.2,.05);spk("dsc","DSC SPREJET: TEST ACK od 002780200 MRCC KOPER");logLine("RX TEST ACK");render();});}}
+];
+
+function globalForbid(e){
+  const d=S.def;
+  if(isDistress(e)&&!d.allowDistress)return {msg:"LAŽNI ALARM! V tem scenariju ni stiske — takoj bi moral preklicati.",crit:true};
+  if(e.type==="dsc_ack")return {msg:"V področju A1 DSC alarma ne potrjuješ z DSC — to stori obalna postaja (ladja le na zahtevo MRCC).",crit:true};
+  if(e.type==="dsc_relay")return {msg:"DSC relay vsem ladjam ni dovoljen kot odziv na DSC alarm; relay le na zahtevo MRCC.",crit:true};
+  if(e.type==="power_off"&&d.id!=="false")return {msg:"Postaje med plovbo ne ugašaj.",minor:true};
+  if(e.type==="voice"&&!e.ok)return {msg:"Glasovno sporočilo ni bilo v pravilnem vrstnem redu.",minor:true};
+  if(e.type==="voice"&&e.ok){const st=d.steps[S.step];if(st&&st.ch&&e.ch!==st.ch)return {msg:"Oddajal si na napačnem kanalu (CH "+e.ch+"), pričakovan je CH "+st.ch+".",minor:true};}
+  if(e.type==="voice_unexpected"&&e.ch===16)return {msg:"Nepotreben prenos na kanalu 16.",minor:true};
+  if(e.type==="channel"&&R.alert&&e.ch!==16&&!S.done)return {msg:"Ob prejetem alarmu ostani na kanalu 16.",minor:true};
+  return null;
+}
+function addErr(b){S.errors.push(b);if(b.crit)S.crit=true;renderTask();}
+function emit(e){
+  if(!S||S.done)return;
+  const st=S.def.steps[S.step];
+  const g=globalForbid(e);if(g)addErr(g);
+  const l=(st&&st.forbid&&st.forbid(e))||(S.def.forbid&&S.def.forbid(e));if(l)addErr(l);
+  if(S.def.react)S.def.react(e);
+  if(st&&st.match(e)){if(st.after)st.after();S.step++;if(S.step>=S.def.steps.length)finish();renderTask();}
+}
+function finish(){S.done=true;alarmOff();const minor=S.errors.filter(x=>!x.crit).length;const pass=!S.crit&&(S.mode==="learn"||minor<=1);
+  S.result={pass,minor,t:Math.round((Date.now()-S.t0)/1000)};
+  const best=store.get("sc",{});if(pass){best[S.def.id]=Math.max(best[S.def.id]||0,S.mode==="exam"?2:1);store.set("sc",best);}fillSel();}
+function renderTask(){
+  if(!S){return;}
+  const d=S.def;$("#taskTitle").textContent=d.title+(S.mode==="exam"?" · izpit":"");$("#taskDesc").textContent=d.desc;
+  $("#taskSteps").innerHTML=d.steps.map((_,i)=>`<span class="${i<S.step?"done":(i===S.step&&!S.done?"cur":"")}"></span>`).join("");
+  const st=d.steps[S.step];
+  $("#taskHint").innerHTML=(!S.done&&S.mode==="learn"&&st)?`<div class="hint"><b>Korak ${S.step+1}:</b> ${esc(st.h)}</div>`:(!S.done&&S.mode==="exam"?`<div class="hint">Izpitni način: brez namigov. Korak ${S.step+1} od ${d.steps.length}.</div>`:"");
+  const showErrs=S.mode==="learn"||S.done;
+  $("#taskErrs").innerHTML=showErrs?S.errors.map(x=>`<li class="${x.crit?"":"minor"}">${x.crit?"KRITIČNO: ":""}${esc(x.msg)}</li>`).join(""):(S.errors.length?`<li class="minor">Napak do zdaj: ${S.errors.length}</li>`:"");
+  $("#taskRes").innerHTML=S.done?`<div class="result ${S.result.pass?"pass":"fail"}">${S.result.pass?"✓ Scenarij opravljen":"✗ Ni opravljeno"} · ${S.result.t} s · manjših napak: ${S.result.minor}${S.crit?" · kritična napaka":""}${S.mode==="exam"&&!S.crit&&S.result.minor>1?" (na izpitu dovoli največ 1 manjšo napako)":""}</div>`:"";
+  $("#waitBtn").style.display=(!S.done&&d.showWait)?"inline-block":"none";
+}
+let MODE="learn";
+$("#modeSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;MODE=b.dataset.m;document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("on",x===b));};
+function fillSel(){const best=store.get("sc",{});const cur=$("#scSel").value;$("#scSel").innerHTML=SC.map((s,i)=>`<option value="${i}">${i+1}. ${esc(s.title)}${best[s.id]===2?"  ✓✓":(best[s.id]?"  ✓":"")}</option>`).join("");if(cur)$("#scSel").value=cur;}
+function start(){clearTimers();closeComposerSilent();resetRadio();spkClear();const def=SC[+$("#scSel").value];S={def,step:0,mode:MODE,errors:[],crit:false,done:false,t0:Date.now(),flags:{}};
+  spk("sys","Scenarij: "+def.title);if(def.setup)def.setup();render();renderTask();$("#radio").scrollIntoView({behavior:"smooth",block:"start"});}
+function closeComposerSilent(){$("#cmp").classList.remove("on");C=null;}
+$("#startBtn").onclick=()=>{beep(800,.01,.001);start();};
+$("#freeBtn").onclick=()=>{clearTimers();closeComposerSilent();resetRadio();spkClear();S=null;spk("sys","Prosta vaja: preizkusi tipke in menije brez ocenjevanja.");
+  $("#taskTitle").textContent="Prosta vaja";$("#taskDesc").textContent="Brez ocenjevanja. Alarm v stiski tu ne odide nikamor.";$("#taskSteps").innerHTML="";$("#taskHint").innerHTML="";$("#taskErrs").innerHTML="";$("#taskRes").innerHTML="";$("#waitBtn").style.display="none";render();};
+$("#waitBtn").onclick=()=>emit({type:"wait"});
+setInterval(()=>{if(R&&!R.screen&&R.holding===null)render();},15000);
+
+/* ---------- QUESTION BANK ---------- */
+const Q=[
+// 1 Pravila o radijski službi
+[1,"Kaj pomeni kratica GMDSS?",["Global Maritime Distress and Safety System","General Marine DSC Safety Service","Global Mobile Digital Signalling System","Ground Maritime Distress Signal Service"],"Svetovni pomorski sistem za stisko in varnost."],
+[1,"Katera mednarodna konvencija določa GMDSS?",["SOLAS","MARPOL","COLREG","STCW"],"GMDSS je v poglavju IV konvencije SOLAS."],
+[1,"Kaj je morsko področje A1?",["Področje v dosegu vsaj ene obalne VHF postaje s stalno DSC stražo","Področje v dosegu obalne MF DSC postaje","Področje satelitskega pokritja Inmarsat","Polarno področje"],"A1 = VHF DSC, približno 20–30 NM od obale."],
+[1,"V katerem morskem področju je slovensko morje?",["A1","A2","A3","A4"],"Ves vzhodni Jadran je A1."],
+[1,"Do kod približno sega področje A2?",["100–150 NM od obalne MF postaje","20–30 NM","Med 70° S in 70° J","Celotna Zemlja"],"A2 pokriva obalna postaja MF DSC."],
+[1,"Koliko funkcij ima GMDSS?",["9","5","7","12"],"Alarmiranje (3 smeri), SAR koordinacija, on-scene, lociranje, MSI, splošne zveze, most–most."],
+[1,"Kaj od naštetega NI funkcija GMDSS?",["Sledenje plovil za carinske namene","Alarmiranje ladja–obala","Oddajanje pomorskih varnostnih informacij (MSI)","Komunikacije most–most"],"Carina ni funkcija GMDSS."],
+[1,"Kaj je MMSI?",["9-mestna identifikacijska številka postaje v pomorski službi","Klicni znak plovila","Serijska številka postaje","Številka vpisa čolna v vpisnik"],"Maritime Mobile Service Identity — vpisan v DSC postajo."],
+[1,"Katere so prve tri števke MMSI slovenske ladijske postaje (MID)?",["278","238","247","228"],"278 = Slovenija; 238 = Hrvaška; 247 = Italija."],
+[1,"Kakšna je oblika MMSI obalne postaje?",["00 + MID + 4 števke","0 + MID + 5 števk","MID + 6 števk","111 + MID + 3 števke"],"Npr. MRCC Koper 002780200."],
+[1,"Komu pripada MMSI 027812345?",["Skupini ladij","Obalni postaji","SAR letalu","Posamezni ladji"],"Ena začetna ničla = skupina."],
+[1,"Komu pripada MMSI 002780200?",["MRCC Koper","Luki Koper","Slovenski vojski","Skupini slovenskih jaht"],"Obalna postaja (00 + 278 + 0200), MRCC Koper."],
+[1,"S katerimi števkami se začne MMSI AIS-SART naprave?",["970","972","974","111"],"970 AIS-SART, 972 MOB, 974 EPIRB-AIS."],
+[1,"Kdo v Sloveniji izda potrdilo o usposobljenosti za upravljanje s postajo VHF GMDSS?",["Uprava RS za pomorstvo (URSP)","AKOS","MRCC Koper","Ministrstvo za notranje zadeve"],"Izpit in potrdilo: URSP v Kopru."],
+[1,"Kdo izda dovoljenje za radijsko postajo na plovilu (s klicnim znakom in MMSI)?",["AKOS","URSP","Luka Koper","Policija"],"AKOS upravlja radijski spekter."],
+[1,"Kakšna je mednarodna predpona klicnih znakov Slovenije?",["S5","9A","OE","I"],"9A Hrvaška, OE Avstrija, I Italija."],
+[1,"Pravilen vrstni red prioritet sporočil je:",["Stiska – nujnost – varnost – rutina","Nujnost – stiska – varnost – rutina","Varnost – stiska – nujnost – rutina","Stiska – varnost – nujnost – rutina"],"MAYDAY → PAN PAN → SECURITE → rutina."],
+[1,"Kateri signal uporabiš za sporočilo NUJNOSTI?",["PAN PAN","MAYDAY","SECURITE","MAYDAY RELAY"],"PAN PAN = urgency."],
+[1,"Kateri signal uporabiš za VARNOSTNO sporočilo?",["SECURITE","PAN PAN","MAYDAY","SEELONCE"],"SECURITE = safety (navigacijsko ali vremensko opozorilo)."],
+[1,"Kdaj je upravičen MAYDAY?",["Ko plovilu ali osebi grozi resna in neposredna nevarnost in je potrebna takojšnja pomoč","Ko odpove motor v mirnem morju","Ko opaziš plavajoč hlod","Ko potrebuješ zdravniški nasvet za lažjo poškodbo"],"Stiska = resna IN neposredna nevarnost."],
+[1,"Član posadke se je poškodoval in potrebuješ zdravniški nasvet. Katero prioriteto uporabiš?",["Nujnost (PAN PAN)","Stisko (MAYDAY)","Varnost (SECURITE)","Rutino"],"Nujno, a brez neposredne življenjske nevarnosti."],
+[1,"Kaj pomeni tajnost zvez?",["Vsebine zvez, ki niso namenjene tebi, ne smeš razkrivati ali izkoriščati","Zveze smeš snemati in deliti","Tajnost velja samo za vojaške zveze","Na kanalu 16 tajnost ne velja"],"Določa jo Radijski pravilnik ITU."],
+[1,"Kdo odloči o pošiljanju alarma v stiski?",["Poveljnik oz. voditelj čolna","Vsak član posadke","MRCC","Lastnik čolna, četudi ni na krovu"],"Postaja je pod nadzorom poveljnika."],
+[1,"Kateri čas uporabljaš v zvezah v stiski?",["UTC","Lokalni čas","Čas v pristanišču vpisa","Kateri koli, da je dogovorjen"],"Vse zveze v sili in dnevniki: UTC."],
+[1,"Ali smeš preverjati postajo (radio check) na kanalu 16?",["Ne, uporabiš delovni kanal","Da, vedno","Da, vendar samo ponoči","Samo na kanalu 70"],"Kanal 16 je za klic in sporočila v sili."],
+[1,"Kateri kanal mora VHF DSC postaja med plovbo neprekinjeno spremljati?",["70","16 z dvojnim spremljanjem 13","06","72"],"DSC sprejemnik samodejno posluša kanal 70; kanal 16, kolikor je mogoče."],
+[1,"Kaj je MRCC?",["Pomorski center za koordinacijo iskanja in reševanja","Mednarodni register čolnov","Pomorska policijska enota","Obalna radijska postaja za javne zveze"],"Maritime Rescue Coordination Centre."],
+[1,"Kaj velja za oddajanje brez identifikacije?",["Prepovedano je","Dovoljeno na delovnih kanalih","Dovoljeno pri rutinskih zvezah","Dovoljeno z ročno postajo"],"Vsaka oddaja mora vsebovati identifikacijo."],
+// 2 Osnove radiotelefonije
+[2,"V katerem frekvenčnem pasu deluje pomorski VHF?",["156–174 MHz","87,5–108 MHz","2–30 MHz","406 MHz"],"87,5–108 je FM radio, 2–30 MHz je MF/HF."],
+[2,"Kako se širijo VHF valovi?",["Premočrtno (vidna linija)","Z odbojem od ionosfere","Kot površinski val okoli Zemlje","Enako dobro za ovire"],"Zato je doseg odvisen od višine anten."],
+[2,"Od česa je predvsem odvisen doseg VHF zveze?",["Od višine anten","Od izbranega kanala","Od vremena","Od glasnosti zvočnika"],"d ≈ 2,5 × (√h1 + √h2) NM."],
+[2,"Antena čolna je na 4 m, obalne postaje na 100 m. Približen doseg?",["30 NM","10 NM","60 NM","100 NM"],"2,5 × (2 + 10) = 30 NM."],
+[2,"Največja oddajna moč fiksne pomorske VHF postaje je:",["25 W","1 W","5 W","100 W"],"Nizka moč je 1 W."],
+[2,"Zakaj v marini oddajaš z nizko močjo (1 W)?",["Da ne motiš drugih postaj","Da prihraniš gorivo","Ker je obvezno samo ponoči","Ker 25 W ne deluje blizu obale"],"Kratka razdalja → najmanjša potrebna moč."],
+[2,"Za kaj je namenjen kanal 70?",["Samo za DSC digitalne klice","Za klic in stisko z govorom","Za pogovore med ladjami","Za marine"],"Na kanalu 70 govor ni dovoljen."],
+[2,"Za kaj je namenjen kanal 16?",["Za stisko, nujnost, varnost in klicanje z govorom","Samo za DSC","Za javne zveze z obalno postajo","Za pogovore na krovu"],"156,800 MHz."],
+[2,"Kanal 13 je namenjen:",["Zvezam most–most za navigacijsko varnost","Stiski","DSC","Zvezam s pristaniščem v Kopru"],"Navadno z 1 W."],
+[2,"Kanal 06 se uporablja za:",["Zveze med ladjami in zveze SAR na kraju nesreče","DSC","Javne zveze","Vremenska poročila"],"Tudi za zveze z letali SAR."],
+[2,"Kanala 15 in 17 sta namenjena:",["Komunikaciji na krovu z 1 W","Stiski","Marinam v Italiji","AIS"],"On-board communications."],
+[2,"Kaj pomeni simpleks?",["Oddaja in sprejem na isti frekvenci, govori le eden","Dve frekvenci, oba govorita hkrati","Samo sprejem","Samo DSC"],"Vse zveze ladja–ladja so simpleks."],
+[2,"Kaj pomeni dupleks?",["Oddaja in sprejem na dveh frekvencah, govorita lahko hkrati","Ista frekvenca, menjavanje s PTT","Dva kanala hkrati v sprejemu","Oddaja z dvema antenama"],"Za javne zveze z obalnimi postajami."],
+[2,"Kaj naredi squelch (SQ)?",["Izklopi šum, ko ni signala","Poveča oddajno moč","Preklopi na kanal 16","Pošlje DSC klic"],"Nastavi ga ravno toliko, da šum izgine."],
+[2,"Kaj pomeni proceduralna beseda OVER?",["Končal sem, pričakujem odgovor","Zveza je končana","Ponovi","Počakaj"],"OVER = tvoj red."],
+[2,"Kako pravilno zaključiš zvezo?",["OUT","OVER AND OUT","OVER","FINISHED"],"»Over and out« je protislovje."],
+[2,"Kaj pomeni SAY AGAIN?",["Ponovi","Ponavljam","Popravek","Počakaj"],"I SAY AGAIN = ponavljam."],
+[2,"Kaj pomeni SEELONCE MAYDAY?",["Ukaz za tišino, ki ga da postaja v stiski ali koordinator reševanja","Konec prometa v stiski","Omejen promet je dovoljen","Prošnja za ponovitev"],"Druga postaja uporabi SEELONCE DISTRESS."],
+[2,"Kaj pomeni SEELONCE FEENEE?",["Promet v stiski je končan","Tišina na kanalu","Omejen promet je dovoljen","Napaka v sporočilu"],"Kanal 16 je spet prost."],
+[2,"Kaj pomeni PRUDONCE?",["Omejen (nujen) promet je spet dovoljen","Popolna tišina","Konec stiske","Prošnja za pomoč"],"Promet v stiski še traja, vendar ni več popolne tišine."],
+[2,"Katera beseda črkovalne abecede je za Q?",["Quebec","Queen","Quiet","Quintus"],"Q = Quebec."],
+[2,"Katera beseda črkovalne abecede je za W?",["Whiskey","Water","Wolf","Wind"],"W = Whiskey."],
+[2,"Kako izgovoriš kanal 72?",["»seven two«","»seventy-two«","»seven-ty two«","»double seven«"],"Številke vedno posamično."],
+[2,"Kaj sledi besedam I SPELL?",["Črkovanje s črkovalno abecedo","Ponovitev sporočila","Številka kanala","Položaj"],"Npr. ime čolna ali klicni znak."],
+[2,"Slišijo te odlično. Kaj odgovori druga postaja na HOW DO YOU READ?",["I READ YOU FIVE","I READ YOU ONE","LOUD AND CLEAR OUT","RECEIVED OVER AND OUT"],"Lestvica 1 (nerazumljivo) do 5 (odlično)."],
+[2,"Kolikokrat največ izgovoriš ime klicane postaje pri rutinskem klicu?",["3-krat","1-krat","5-krat","Dokler ne odgovori"],"In svoje ime prav tako do 3-krat."],
+[2,"Klicana postaja ne odgovori. Kaj velja (ITU)?",["Klic ponoviš do 3-krat v razmaku 2 min, nato premor vsaj 3 min","Kličeš neprekinjeno","Takoj pošlješ PAN PAN","Ponoviš čez 10 s"],"ITU-R M.1171."],
+// 3 Delo na postaji
+[3,"Kako pošlješ NEDOLOČEN DSC alarm v stiski?",["Dvigneš pokrov in držiš DISTRESS 3–5 s","Pritisneš 16/9","Pošlješ ALL SHIPS URGENCY","Kratko pritisneš DISTRESS"],"Kratek pritisk alarma ne sproži."],
+[3,"Katere podatke DSC alarm v stiski vsebuje samodejno?",["MMSI, položaj, čas UTC in naravo stiske","Samo ime čolna","Število oseb na krovu","Klicni znak in pristanišče vpisa"],"Zato mora biti priključen GPS."],
+[3,"Kaj narediš takoj po poslanem DSC alarmu?",["Počakaš DSC potrditev (kratko) in oddaš MAYDAY po govoru na kanalu 16","Ugasneš postajo","Oddaš MAYDAY na kanalu 70","Pošlješ še testni klic"],"DSC samo napove, sporočilo gre po govoru."],
+[3,"Kaj se zgodi, če DSC alarma nihče ne potrdi?",["Postaja ga samodejno ponavlja vsakih 3,5–4,5 min","Alarm se ne ponovi","Postaja se izklopi","Alarm se pošlje na kanalu 16"],"Ponavlja do potrditve ali preklica."],
+[3,"Postaja nima podatka o položaju (GPS). Kaj narediš?",["Položaj vneseš ročno","Alarm pošlješ brez položaja, saj ni pomemben","Pošlješ PAN PAN","Ne pošlješ alarma"],"Položaj je ključen za reševanje."],
+[3,"V področju A1 prejmeš DSC alarm v stiski. Kaj narediš najprej?",["Utišaš alarm in poslušaš kanal 16; z DSC ne potrdiš","Takoj potrdiš z DSC","Pošlješ DSC relay vsem ladjam","Preklopiš na kanal 72"],"DSC potrditev pošlje obalna postaja."],
+[3,"Kdo običajno potrdi DSC alarm v stiski z DSC potrditvijo?",["Obalna postaja / MRCC","Najbližja ladja","Vsaka ladja, ki ga sprejme","Nihče"],"Ladja z DSC potrdi le na zahtevo MRCC."],
+[3,"Prejel si alarm, obalna postaja se 5 minut ne odzove. Kaj narediš?",["Obvestiš MRCC — glasovni MAYDAY RELAY na kanalu 16","Ugasneš alarm in nadaljuješ plovbo","Pošlješ DSC ACK","Počakaš še eno uro"],"Ne pustiš alarma brez odziva."],
+[3,"Kdaj pošlješ MAYDAY RELAY?",["Ko plovilo v stiski samo ne more oddajati ali nihče ne odgovori","Ko sam potrebuješ vleko","Vedno, ko slišiš MAYDAY","Ko želiš preveriti postajo"],"Posreduješ stisko drugega plovila."],
+[3,"Pomotoma si poslal DSC alarm. Kaj narediš?",["Ne ugasneš postaje; prekličeš z DSC (če ima funkcijo) in z govorom na kanalu 16","Takoj ugasneš postajo","Ne narediš nič","Pošlješ še en alarm"],"Obvesti še MRCC."],
+[3,"Kateri stavek spada v glasovni preklic lažnega alarma?",["CANCEL MY DISTRESS ALERT OF (datum) AT (čas) UTC","SEELONCE FEENEE","MAYDAY RELAY","RECEIVED MAYDAY"],"Začne se z ALL STATIONS ×3."],
+[3,"Kaj NE spada v MAYDAY sporočilo?",["ALL STATIONS, ALL STATIONS, ALL STATIONS","Položaj","Narava stiske","Število oseb na krovu"],"MAYDAY je že klic vsem."],
+[3,"Kateri je pravilen vrstni red v MAYDAY sporočilu po identifikaciji?",["Položaj – narava stiske – potrebna pomoč – osebe – Over","Narava – osebe – položaj – Out","Osebe – položaj – Over – narava","Pomoč – narava – položaj – Out"],"Mnemotehnika MIPDANIO."],
+[3,"Opazil si plavajoč zabojnik. Katero DSC kategorijo izbereš?",["SAFETY","URGENCY","DISTRESS","ROUTINE"],"Navigacijsko opozorilo = SECURITE."],
+[3,"Motor je odpovedal, ni neposredne nevarnosti. DSC kategorija?",["URGENCY","DISTRESS","SAFETY","ROUTINE"],"PAN PAN."],
+[3,"Kako pokličeš drug čoln z DSC za pogovor?",["INDIVIDUAL CALL – MMSI – ROUTINE – delovni kanal","ALL SHIPS – URGENCY","DISTRESS","TEST CALL"],"Po potrditvi preklopiš na delovni kanal."],
+[3,"Kje poteka govor po DSC klicu ALL SHIPS URGENCY?",["Na kanalu 16","Na kanalu 70","Na kanalu 13","Na kateremkoli"],"Kanal 70 je samo za DSC."],
+[3,"Kje oddaš vsebino varnostnega sporočila SECURITE?",["Na delovnem kanalu, ki si ga napovedal na kanalu 16","Na kanalu 70","Celotno na kanalu 16, večkrat zapored","Na kanalu 15"],"Kanal 16 ostane prost."],
+[3,"Kako preveriš delovanje DSC dela postaje?",["S TEST klicem obalni postaji","Z DSC alarmom v stiski","Z govornim klicem na kanalu 16","Z ALL SHIPS klicem"],"Nikoli s pravim alarmom."],
+[3,"Kaj pomeni odgovor ABLE TO COMPLY na tvoj DSC klic?",["Klicana postaja sprejema klic in predlagani kanal","Klicana postaja ne more odgovoriti","Alarm je potrjen","Kanal je zaseden"],"Nato preklopiš na kanal."],
+[3,"Kaj naredi tipka 16/9?",["Takoj preklopi na kanal 16","Vklopi DSC","Preklopi moč","Pošlje alarm"],"Hiter dostop do 16."],
+[3,"Kaj je dvojno spremljanje (DW)?",["Hkratno poslušanje kanala 16 in izbranega kanala","Oddaja na dveh kanalih","Dve postaji na krovu","Dvojna moč"],"Triple watch doda še en kanal."],
+[3,"Na kateri frekvenci oddaja EPIRB alarm prek satelitov Cospas-Sarsat?",["406 MHz","121,5 MHz","156,8 MHz","518 kHz"],"121,5 MHz služi za iskanje (homing)."],
+[3,"Kdaj se samodejno sprosti EPIRB s hidrostatskim sprostilcem?",["Na globini 1,5–4 m","Ob dotiku z vodo","Na globini 20 m","Samo ročno"],"Plava na površje in se vklopi."],
+[3,"EPIRB se je pomotoma vklopil. Kaj narediš?",["Izklopiš ga in obvestiš MRCC","Ga pustiš delovati","Ga vržeš v morje","Pošlješ PAN PAN"],"Lažni alarm vedno prijaviš."],
+[3,"Kako se SART prikaže na radarju?",["Kot vrsta 12 pik od položaja SART navzven","Kot ena velika točka","Kot črta čez cel zaslon","Na radarju se ne vidi"],"Bližje kot ~1 NM pike preidejo v loke in kroge."],
+[3,"V katerem frekvenčnem pasu deluje radarski SART?",["9 GHz (radar X, 3 cm)","3 GHz (radar S)","406 MHz","VHF kanal 70"],"Odziva se samo na radar X."],
+[3,"Na kateri frekvenci oddaja mednarodni NAVTEX (v angleščini)?",["518 kHz","490 kHz","156,525 MHz","2182 kHz"],"490 kHz je za nacionalna sporočila."],
+[3,"Katere vrste NAVTEX sporočil ne moreš izklopiti?",["A, B in D","A, E in L","Samo A","Nobene"],"A nav. opozorila, B vremenska opozorila, D SAR in pirati."],
+[3,"V NAVTEX oznaki sporočila znak B2 = A pomeni:",["Navigacijsko opozorilo","Vremensko napoved","Poročilo o ledu","Pirate"],"B1 je postaja, B2 vrsta sporočila."],
+[3,"Kdo konča promet v stiski s SEELONCE FEENEE?",["Postaja, ki je vodila promet v stiski (običajno RCC)","Katerakoli ladja","Plovilo, ki je poslalo MAYDAY RELAY","Nihče, promet se konča sam"],"Kanal je nato prost."]
+];
+const SUBJ={1:"Pravila o radijski službi",2:"Osnove radiotelefonije",3:"Delo na postaji"};
+
+/* ---------- quiz engine ---------- */
+let T=null;
+function qById(i){const q=Q[i];return {i,s:q[0],q:q[1],a:q[2],e:q[3]};}
+function startTest(kind){
+  let ids=Q.map((_,i)=>i);
+  if(kind==="exam"){ids=[1,2,3].flatMap(s=>shuffle(ids.filter(i=>Q[i][0]===s)).slice(0,8));ids=shuffle(ids);}
+  else if(kind==="all")ids=shuffle(ids);
+  else if(kind==="wrong"){const w=store.get("wrong",[]);ids=shuffle(ids.filter(i=>w.includes(i)));if(!ids.length){$("#bestLbl").textContent="Ni shranjenih napačnih odgovorov — odlično.";return;}}
+  else ids=shuffle(ids.filter(i=>Q[i][0]===+kind.slice(1)));
+  T={kind,ids,k:0,ans:[],order:null,picked:null};
+  $("#testHome").style.display="none";$("#testRun").style.display="block";drawQ();
+}
+function drawQ(){
+  const q=qById(T.ids[T.k]);T.order=shuffle([0,1,2,3]);T.picked=null;
+  $("#testRun").innerHTML=`<div class="qhead"><span>${T.k+1} / ${T.ids.length} · ${esc(SUBJ[q.s])}</span><button class="btn ghost small" id="qQuit" style="padding:2px 8px">Končaj</button></div>
+  <div class="pbar"><i style="width:${(T.k/T.ids.length*100).toFixed(1)}%"></i></div>
+  <div class="qtxt">${esc(q.q)}</div><div class="opts">${T.order.map(o=>`<button data-o="${o}">${esc(q.a[o])}</button>`).join("")}</div><div id="qAfter"></div>`;
+  $("#qQuit").onclick=()=>endTest();
+  $("#testRun").querySelector(".opts").onclick=e=>{const b=e.target.closest("button");if(!b||T.picked!==null)return;pick(+b.dataset.o);};
+}
+function pick(o){
+  const q=qById(T.ids[T.k]);T.picked=o;const ok=o===0;T.ans.push({i:q.i,ok});
+  const w=new Set(store.get("wrong",[]));if(ok)w.delete(q.i);else w.add(q.i);store.set("wrong",[...w]);
+  $("#testRun").querySelectorAll(".opts button").forEach(b=>{const v=+b.dataset.o;if(v===0)b.classList.add("ok");else if(v===o)b.classList.add("no");b.disabled=true;});
+  $("#qAfter").innerHTML=`<div class="expl"><b>${ok?"Pravilno.":"Napačno."}</b> ${esc(q.e)}</div><div class="row" style="margin-top:10px"><button class="btn primary" id="qNext">${T.k+1<T.ids.length?"Naprej":"Rezultat"}</button></div>`;
+  $("#qNext").onclick=()=>{T.k++;if(T.k<T.ids.length)drawQ();else endTest();};
+  $("#qNext").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function endTest(){
+  const n=T.ans.length;if(!n){backHome();return;}
+  const c=T.ans.filter(a=>a.ok).length;const pct=Math.round(c/n*100);
+  const per=[1,2,3].map(s=>{const a=T.ans.filter(x=>Q[x.i][0]===s);return a.length?`<div class="sub"><span>${SUBJ[s]}</span><b>${a.filter(x=>x.ok).length} / ${a.length}</b></div>`:"";}).join("");
+  const miss=T.ans.filter(a=>!a.ok).map(a=>`<li><b>${esc(Q[a.i][1])}</b><br><span style="color:var(--ok)">${esc(Q[a.i][2][0])}</span></li>`).join("");
+  if(T.kind==="exam"&&n===T.ids.length){const b=store.get("best",0);if(pct>b)store.set("best",pct);}
+  $("#testRun").innerHTML=`<h2>Rezultat</h2><div class="big" style="color:${pct>=85?"var(--ok)":"var(--bad)"}">${pct} %</div><div class="small muted" style="margin-bottom:8px">${c} od ${n} pravilnih · ${pct>=85?"pripravljen":"še vadi"} (cilj 85 %)</div>${per}${miss?`<div class="miss"><b>Za ponovitev:</b><ul>${miss}</ul></div>`:""}<div class="row" style="margin-top:10px"><button class="btn primary" id="tAgain">Nov test</button><button class="btn" id="tHome">Nazaj</button></div>`;
+  $("#tAgain").onclick=()=>startTest(T.kind==="wrong"?"wrong":T.kind);$("#tHome").onclick=backHome;
+}
+function backHome(){$("#testRun").style.display="none";$("#testHome").style.display="block";const b=store.get("best",0);const w=store.get("wrong",[]).length;$("#bestLbl").textContent=(b?`Najboljši testni izpit: ${b} %. `:"")+(w?`Shranjenih napačnih: ${w}.`:"");}
+$("#testHome").querySelector(".grid2").onclick=e=>{const b=e.target.closest("button");if(b)startTest(b.dataset.t);};
+
+/* ---------- ORAL ---------- */
+const ORAL=[
+["Kaj je GMDSS in čemu služi?","Global Maritime Distress and Safety System, določen v SOLAS (pogl. IV), v celoti od 1. 2. 1999. Zagotavlja, da ob nesreči hitro alarmiramo obalni reševalni center in ladje v bližini ter omogoča koordinacijo reševanja, kjerkoli smo."],
+["Naštej funkcije GMDSS.","1) alarmiranje ladja–obala, 2) obala–ladja, 3) ladja–ladja, 4) SAR koordinacija, 5) zveze na kraju nesreče, 6) signali za lociranje (SART), 7) MSI – pomorske varnostne informacije, 8) splošne radijske zveze, 9) zveze most–most."],
+["Razloži morska področja A1–A4. Kje je Slovenija?","A1: doseg obalne VHF DSC postaje (~20–30 NM). A2: doseg MF DSC (~100–150 NM). A3: pokritje Inmarsat (70° S–70° J). A4: ostalo, polarna območja. Slovensko morje je A1."],
+["Kaj je MMSI in kako je sestavljen?","9-mestna številka postaje. Ladja: MID + 6 (278xxxxxx). Skupina: 0 + MID + 5. Obalna postaja: 00 + MID + 4 (MRCC Koper 002780200). SAR letalo 111…, AIS-SART 970…, MOB 972…, EPIRB-AIS 974…. MID Slovenije je 278."],
+["Kdo izda potrdilo operaterja in kdo dovoljenje za postajo?","Potrdilo o usposobljenosti za VHF GMDSS: Uprava RS za pomorstvo (URSP). Dovoljenje za radijsko postajo na plovilu s klicnim znakom (S5…) in MMSI: AKOS."],
+["Naštej prioritete sporočil in primer za vsako.","1) Stiska – MAYDAY (požar, potapljanje). 2) Nujnost – PAN PAN (okvara motorja brez nevarnosti, zdravniški nasvet). 3) Varnost – SECURITE (plavajoč zabojnik, vremensko opozorilo). 4) Rutina."],
+["Kaj je tajnost zvez in kaj je prepovedano?","Vsebine zvez, ki niso namenjene tebi, ne smeš razkrivati ali izkoriščati. Prepovedano: nepotrebne in lažne oddaje, oddaje brez identifikacije, nespodobno izražanje, motenje, klepet in radio check na kanalu 16."],
+["Kateri kanali so ključni in za kaj?","70 – samo DSC. 16 – stiska, nujnost, varnost, klicanje. 06 – med ladjami, SAR na kraju nesreče. 13 – most–most (1 W). 12 – pristanišče, MRCC Koper. 72/77/08 – delovni med ladjami. 15/17 – na krovu (1 W)."],
+["Kako se širijo VHF valovi in kako oceniš doseg?","Premočrtno, zato šteje višina anten: d ≈ 2,5 × (√h1 + √h2) NM. Čoln (4 m) – obalna postaja (100 m): ~30 NM; čoln–čoln: ~10 NM."],
+["Kaj je razlika med simpleks in dupleks?","Simpleks: ena frekvenca, govori eden (PTT) – ladja–ladja. Dupleks: dve frekvenci, govorita lahko hkrati – javne zveze z obalno postajo."],
+["Razloži besede za tišino na kanalu.","SEELONCE MAYDAY – tišino ukaže plovilo v stiski ali koordinator. SEELONCE DISTRESS – tišino ukaže druga postaja. PRUDONCE – omejen promet spet dovoljen. SEELONCE FEENEE – promet v stiski je končan."],
+["Kako pošlješ DSC alarm v stiski?","Nedoločen: dvigni pokrov, drži DISTRESS 3–5 s. Določen: MENU → Distress → izberi naravo → drži DISTRESS. Postaja preklopi na 16 in 25 W, alarm se ponavlja vsakih 3,5–4,5 min do potrditve. Nato MAYDAY po govoru na 16."],
+["Povej MAYDAY sporočilo na pamet.","MAYDAY ×3, THIS IS (ime ×3), klicni znak, MMSI; MAYDAY (ime, klicni znak, MMSI); MY POSITION …; narava stiske; I REQUIRE IMMEDIATE ASSISTANCE; število oseb; druge informacije; OVER. (MIPDANIO)"],
+["Kaj narediš, ko prejmeš tuj DSC alarm?","Utišam alarm, poslušam kanal 16, zapišem MMSI, položaj, čas, naravo. Z DSC ne potrdim (v A1 potrdi obalna postaja). Če lahko pomagam, po potrditvi obale potrdim po govoru in obvestim MRCC. Če po ~5 min ni odziva obale: MAYDAY RELAY po govoru."],
+["Kako potrdiš prejem MAYDAY po govoru?","MAYDAY, (ime ponesrečenca ×3), THIS IS (moje ime ×3), RECEIVED MAYDAY. Nato moj položaj, hitrost, ETA. OVER."],
+["Kdaj in kako pošlješ MAYDAY RELAY?","Ko plovilo v stiski samo ne more oddajati ali nihče ne odgovori. MAYDAY RELAY ×3, ALL STATIONS ×3 (ali MRCC KOPER ×3), THIS IS (ime ×3), nato vsi podatki o plovilu v stiski. OVER."],
+["Kaj narediš ob lažnem DSC alarmu?","Ne ugasnem postaje. Prekličem z DSC (Cancel) in po govoru na 16: ALL STATIONS ×3, THIS IS (ime ×3), klicni znak, MMSI, položaj, CANCEL MY DISTRESS ALERT OF (datum, čas UTC), MASTER …, OUT. Obvestim MRCC."],
+["Kako poteka PAN PAN?","DSC: ALL SHIPS → URGENCY → kanal 16. Govor na 16: PAN PAN ×3, ALL STATIONS ×3, THIS IS (ime ×3), identiteta, položaj, težava, potrebna pomoč, osebe, OVER."],
+["Kako poteka SECURITE?","DSC: ALL SHIPS → SAFETY → kanal 16. Na 16 napoved: SECURITE ×3, ALL STATIONS ×3, THIS IS …, FOR NAVIGATIONAL WARNING LISTEN ON CHANNEL (delovni), OUT. Vsebino oddaš na delovnem kanalu."],
+["Kako pokličeš drug čoln z DSC?","MENU → Individual call → MMSI → Routine → predlagan kanal (npr. 72) → pošlji. Ko dobiš ABLE TO COMPLY, preklopiš na kanal in kličeš po govoru."],
+["Kaj je EPIRB in kako deluje?","Satelitska boja za alarm: 406 MHz prek Cospas-Sarsat (MMSI/ID, položaj iz GNSS) in 121,5 MHz za iskanje. Vklop ročno ali samodejno (hidrostatski sprostilec 1,5–4 m). Mora biti registrirana. Lažno aktivacijo izklopiš in javiš MRCC."],
+["Kaj je SART in kako ga vidiš?","Radarski odzivnik 9 GHz (radar X). Na radarju 12 pik od položaja navzven; bližje kot ~1 NM loki, nato krogi. Doseg ~5 NM do ladje, več do letala. AIS-SART se vidi na AIS s MMSI 970…."],
+["Kaj je NAVTEX?","Samodejni sprejem pomorskih varnostnih informacij na 518 kHz (angleško) in 490 kHz (nacionalno), doseg do ~400 NM. Oznaka B1B2B3B4: postaja, vrsta (A nav., B vreme opoz., D SAR, E napoved), številka. A, B, D ni mogoče izklopiti."],
+["Opiši kontrole VHF DSC postaje.","PWR/VOL, SQ (squelch), CH, 16/9 (takoj 16), H/L (25/1 W), DW/TW (dvojno/trojno spremljanje), SCAN, MENU/CALL (DSC meni), DISTRESS pod pokrovom, PTT na mikrofonu."],
+["Črkuj SIRENA in klicni znak S5AB2.","Sierra India Romeo Echo November Alfa. Sierra Five Alfa Bravo Two."]
+];
+let O=null;
+function oralInit(){O={deck:shuffle(ORAL.map((_,i)=>i)),known:0,total:ORAL.length};oralDraw();}
+function oralDraw(){
+  if(!O.deck.length){$("#oQ").textContent="Vse kartice znaš. Bravo!";$("#oA").style.display="none";$("#oBtns").innerHTML='<button class="btn primary" id="oRe">Ponovno</button>';$("#oRe").onclick=oralInit;$("#oCount").textContent="";$("#oBar").style.width="100%";return;}
+  const c=ORAL[O.deck[0]];$("#oQ").textContent=c[0];$("#oA").textContent=c[1];$("#oA").style.display="none";
+  $("#oCount").textContent=`Ostane ${O.deck.length}`;$("#oKnown").textContent=`Znam: ${O.known}/${O.total}`;$("#oBar").style.width=(O.known/O.total*100)+"%";
+  $("#oBtns").innerHTML='<button class="btn primary" id="oShow">Pokaži odgovor</button>';
+  $("#oShow").onclick=()=>{$("#oA").style.display="block";$("#oBtns").innerHTML='<button class="btn" id="oNo">Še ne znam</button><button class="btn primary" id="oYes">Znam</button>';
+    $("#oNo").onclick=()=>{O.deck.push(O.deck.shift());oralDraw();};$("#oYes").onclick=()=>{O.deck.shift();O.known++;oralDraw();};};
+}
+
+/* ---------- init ---------- */
+resetRadio();fillSel();render();backHome();oralInit();route();
+if("serviceWorker" in navigator&&location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(()=>{});}
+</script>
+</body>
+</html>

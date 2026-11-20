@@ -1,0 +1,14 @@
+{
+  "name": "VHF GMDSS trener",
+  "short_name": "VHF GMDSS",
+  "description": "Gradivo, simulator VHF DSC postaje in testni izpiti za izpit VHF GMDSS.",
+  "lang": "sl",
+  "start_url": "./#gradivo",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d1823",
+  "theme_color": "#0a131c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
